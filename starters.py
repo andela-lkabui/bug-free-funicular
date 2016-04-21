@@ -13,12 +13,17 @@ def hello():
 
 @app.route('/outlets/', methods=['GET', 'POST'])
 def outlets():
+	outlet_schema = OutletSchema()
 	if request.method == 'GET':
-		return 'Your outlets!'
+		# list view
+		all_outlets = Outlets.query.all()
+		json_result = outlet_schema.dumps(all_outlets, many=True)
+		return json_result.data, 200
+
 	if request.method == 'POST':
 		# specify data fields to look out for from user
 		parser = reqparse.RequestParser()
-		parser.add_argument('name', required=True)
+		parser.add_argument('name')
 		parser.add_argument('postal_address')
 		values = parser.parse_args()
 		# create outlet object from data
@@ -26,17 +31,36 @@ def outlets():
 		db.session.add(new_outlet)
 		db.session.commit()
 		# display details of object just created
-		outlet_schema = OutletSchema()
 		json_result = outlet_schema.dumps(new_outlet)
 		return json_result.data, 201
 
 
 @app.route('/outlets/<outlet_id>/', methods=['GET', 'PUT'])
 def outlets_detail(outlet_id):
+	outlet_schema = OutletSchema()
 	if request.method == 'GET':
-		return 'Outlet of id: {0}!'.format(outlet_id)
+		one_outlet = Outlets.query.get(outlet_id)
+		json_result = outlet_schema.dumps(one_outlet)
+		return json_result.data, 200
+
 	if request.method == 'PUT':
-		return 'Detail view for outlets'
+		# get the update data from the client
+		parser = reqparse.RequestParser()
+		parser.add_argument('name')
+		parser.add_argument('postal_address')
+		values = parser.parse_args()
+		# fetch the object from the DB
+		edit_outlet = Outlets.query.get(outlet_id)
+		# update object properties only when new values have been provided by
+		# the client
+		if values.get('name'):
+			edit_outlet.name = values.get('name')
+		if values.get('postal_address'):
+			edit_outlet.postal_address = values.get('postal_address')
+		db.session.add(edit_outlet)
+		db.session.commit()
+		json_result = outlet_schema.dumps(edit_outlet)
+		return json_result.data, 200
 
 
 @app.route('/expenses')
