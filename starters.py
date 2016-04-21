@@ -1,9 +1,13 @@
+import json
+
 from flask import request
 from flask_restful import reqparse
 
 from models import Outlets
 from serializer import OutletSchema
 from app import app, db
+
+not_found = {'detail': 'Not found.'}
 
 
 @app.route('/')
@@ -35,7 +39,7 @@ def outlets():
 		return json_result.data, 201
 
 
-@app.route('/outlets/<outlet_id>/', methods=['GET', 'PUT'])
+@app.route('/outlets/<outlet_id>/', methods=['GET', 'PUT', 'DELETE'])
 def outlets_detail(outlet_id):
 	outlet_schema = OutletSchema()
 	if request.method == 'GET':
@@ -51,16 +55,26 @@ def outlets_detail(outlet_id):
 		values = parser.parse_args()
 		# fetch the object from the DB
 		edit_outlet = Outlets.query.get(outlet_id)
-		# update object properties only when new values have been provided by
-		# the client
-		if values.get('name'):
-			edit_outlet.name = values.get('name')
-		if values.get('postal_address'):
-			edit_outlet.postal_address = values.get('postal_address')
-		db.session.add(edit_outlet)
-		db.session.commit()
-		json_result = outlet_schema.dumps(edit_outlet)
-		return json_result.data, 200
+		if edit_outlet:
+			# update object properties only when new values have been provided by
+			# the client
+			if values.get('name'):
+				edit_outlet.name = values.get('name')
+			if values.get('postal_address'):
+				edit_outlet.postal_address = values.get('postal_address')
+			db.session.add(edit_outlet)
+			db.session.commit()
+			json_result = outlet_schema.dumps(edit_outlet)
+			return json_result.data, 200
+		return json.dumps(not_found), 400
+
+	if request.method == 'DELETE':
+		del_outlet = Outlets.query.get(outlet_id)
+		if del_outlet:
+			db.session.delete(del_outlet)
+			db.session.commit()
+			return '', 204
+		return json.dumps(not_found), 400
 
 
 @app.route('/expenses')
