@@ -3,8 +3,8 @@ import json
 from flask import request
 from flask_restful import reqparse
 
-from models import Outlets
-from serializer import OutletSchema
+from models import Outlets, Goods
+from serializer import OutletSchema, GoodsSchema
 from app import app, db
 
 not_found = {'detail': 'Not found.'}
@@ -16,7 +16,7 @@ def hello():
 
 
 @app.route('/outlets/', methods=['GET', 'POST'])
-def outlets():
+def outlets_list():
 	outlet_schema = OutletSchema()
 	if request.method == 'GET':
 		# list view
@@ -77,9 +77,29 @@ def outlets_detail(outlet_id):
 		return json.dumps(not_found), 400
 
 
-@app.route('/expenses')
-def expenses():
-	return 'Your expenses!'
+@app.route('/goods/', methods=['GET', 'POST'])
+def goods_list():
+	goods_schema = GoodsSchema()
+	if request.method == 'GET':
+		all_goods = Goods.query.all()
+		json_result = goods_schema.dumps(all_goods, many=True)
+		return json_result.data, 200
+
+	if request.method == 'POST':
+		parser = reqparse.RequestParser()
+		parser.add_argument('name')
+		parser.add_argument('price')
+		parser.add_argument('necessary')
+		values = parser.parse_args()
+
+		result = goods_schema.load(values)
+
+		# new_good = Goods(**values)
+		db.session.add(result.data)
+		db.session.commit()
+
+		json_result = goods_schema.dumps(result.data)
+		return json_result.data, 201
 
 
 @app.route('/accounts')
