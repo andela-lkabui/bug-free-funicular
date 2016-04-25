@@ -1,6 +1,6 @@
 from marshmallow import Schema, fields, post_load
 
-from models import Goods
+from models import Goods, Services
 
 
 class OutletSchema(Schema):
@@ -18,3 +18,13 @@ class GoodsSchema(Schema):
 	@post_load
 	def create_good(self, data):
 		return Goods(**data)
+
+
+class ServicesSchema(Schema):
+	id = fields.Integer()
+	name = fields.Str()
+	price = fields.Str()
+
+	@post_load
+	def create_service(self, data):
+		return Services(**data)
