@@ -3,8 +3,8 @@ import json
 from flask import request
 from flask_restful import reqparse
 
-from models import Outlets, Goods
-from serializer import OutletSchema, GoodsSchema
+from models import Outlets, Goods, Services
+from serializer import OutletSchema, GoodsSchema, ServicesSchema
 from app import app, db
 
 not_found = {'detail': 'Not found.'}
@@ -133,6 +133,63 @@ def goods_detail(good_id):
 		del_good = Goods.query.get(good_id)
 		if del_good:
 			db.session.delete(del_good)
+			db.session.commit()
+			return '', 204
+		return json.dumps(not_found), 400
+
+
+@app.route('/services/', methods=['GET', 'POST'])
+def services_list():
+	services_schema = ServicesSchema()
+	if request.method == 'GET':
+		all_services = Services.query.all()
+		json_result = services_schema.dumps(all_services, many=True)
+		return json_result.data, 200
+
+	if request.method == 'POST':
+		parser = reqparse.RequestParser()
+		parser.add_argument('name')
+		parser.add_argument('price')
+		values = parser.parse_args()
+
+		result = services_schema.load(values)
+		db.session.add(result.data)
+		db.session.commit()
+
+		json_result = services_schema.dumps(result.data)
+		return json_result.data, 201
+
+
+@app.route('/services/<service_id>/', methods=['GET', 'PUT', 'DELETE'])
+def services_detail(service_id):
+	services_schema = ServicesSchema()
+	if request.method == 'GET':
+		get_service = Services.query.get(service_id)
+		json_result = services_schema.dumps(get_service)
+		return json_result.data, 200
+
+	if request.method == 'PUT':
+		parser = reqparse.RequestParser()
+		parser.add_argument('name')
+		parser.add_argument('price')
+		values = parser.parse_args()
+		# fetch the object from the DB
+		edit_service = Services.query.get(service_id)
+		if edit_service:
+			if values.get('name'):
+				edit_service.name = values.get('name')
+			if values.get('price'):
+				edit_service.price = values.get('price')
+			db.session.add(edit_service)
+			db.session.commit()
+			json_result = services_schema.dumps(edit_service)
+			return json_result.data, 200
+		return json.dumps(not_found), 400
+
+	if request.method == 'DELETE':
+		del_service = Services.query.get(service_id)
+		if del_service:
+			db.session.delete(del_service)
 			db.session.commit()
 			return '', 204
 		return json.dumps(not_found), 400
