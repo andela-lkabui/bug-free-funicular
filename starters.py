@@ -205,7 +205,22 @@ def login():
 		return 'You are at the user login url'
 
 	if request.method == 'POST':
-		return 'Define login logic here.'
+		parser = reqparse.RequestParser()
+		parser.add_argument('username')
+		parser.add_argument('password')
+		values = parser.parse_args()
+		
+		user = User.query.filter_by(username=values.get('username')).first()
+		if user:
+			if user.verify_password(values.get('password')):
+				token = user.generate_auth_token()
+				decoded = token.decode('ascii')
+				user.is_active = True
+				db.session.add(user)
+				db.session.commit()
+				return json.dumps({'token': decoded}), 200
+			return json.dumps({'message': 'Username and password does not match'}), 400
+		return json.dumps({'message': 'User does not exist'}), 400
 
 @app.route('/auth/new/', methods=['GET', 'POST'])
 def registration():
