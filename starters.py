@@ -3,7 +3,7 @@ import json
 from flask import request
 from flask_restful import reqparse
 
-from models import Outlets, Goods, Services
+from models import Outlets, Goods, Services, User
 from serializer import OutletSchema, GoodsSchema, ServicesSchema
 from app import app, db
 
@@ -199,5 +199,38 @@ def services_detail(service_id):
 def accounts():
 	return 'Your accounts!'
 
+@app.route('/auth/login/', methods=['GET', 'POST'])
+def login():
+	if request.method == 'GET':
+		return 'You are at the user login url'
+
+	if request.method == 'POST':
+		return 'Define login logic here.'
+
+@app.route('/auth/new/', methods=['GET', 'POST'])
+def registration():
+	if request.method == 'GET':
+		return 'You are at the user registration url'
+
+	if request.method == 'POST':
+		parser = reqparse.RequestParser()
+		parser.add_argument('username')
+		parser.add_argument('password')
+		values = parser.parse_args()
+
+		if values.get('username'):
+			if values.get('password'):
+				# check if a user by provided username already exists
+				exists = User.query.filter_by(username=values.get('username')).first()
+				if exists:
+					return json.dumps({'message': 'User already exists'}), 400
+				user = User(username=values.get('username'))
+				user.hash_password(values.get('password'))
+				db.session.add(user)
+				db.session.commit()
+				return json.dumps({'message': 'User successfully registered'}), 201
+			return json.dumps({'message': 'Password missing'}), 400
+		return json.dumps({'message': 'Username missing'}), 400
+		
 if __name__ == '__main__':
 	app.run(debug=True)
