@@ -209,7 +209,7 @@ def login():
 		parser.add_argument('username')
 		parser.add_argument('password')
 		values = parser.parse_args()
-		
+
 		user = User.query.filter_by(username=values.get('username')).first()
 		if user:
 			if user.verify_password(values.get('password')):
@@ -221,6 +221,16 @@ def login():
 				return json.dumps({'token': decoded}), 200
 			return json.dumps({'message': 'Username and password does not match'}), 400
 		return json.dumps({'message': 'User does not exist'}), 400
+
+@app.route('/auth/logout/')
+def logout():
+	user = User.verify_auth_token(request.headers.get('username'))
+	if user:
+		user.is_active = False
+		db.session.add(user)
+		db.session.commit()
+		return json.dumps({'message': 'User successfully logged out'}), 200
+	return json.dumps({'message': 'User is not logged in'}), 400
 
 @app.route('/auth/new/', methods=['GET', 'POST'])
 def registration():
