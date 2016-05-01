@@ -13,6 +13,7 @@ itsdangerous==0.24
 Jinja2==2.8
 MarkupSafe==0.23
 marshmallow==2.7.1
+passlib==1.6.5
 pexpect==4.0.1
 pickleshare==0.7.2
 ptyprocess==0.5.1
