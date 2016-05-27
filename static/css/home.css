@@ -47,8 +47,14 @@
 #signup_div button {
     width: 10%;
     height: 4em;
-    color: #606060;
+    color: #ffffff;
     font-weight: bold;
     border-color: #606060;
     border-width: medium;
+    background-color: #0379CE;
+}
+
+.btn-default {
+    background-image: none;
+    text-shadow: none;
 }
