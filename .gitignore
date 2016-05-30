@@ -9,3 +9,9 @@
 
 # ignore sqlite database file
 *.db
+
+# ignore coverage reports
+.coverage
+
+# ignore OS system files
+.DS_Store
