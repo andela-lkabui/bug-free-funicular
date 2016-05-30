@@ -1,7 +1,10 @@
 import os
 import unittest
 
-from app import app, db
+from faker import Factory
+
+from app import db
+from starters import app
 
 
 class TestBase(unittest.TestCase):
@@ -12,9 +15,12 @@ class TestBase(unittest.TestCase):
         test_url = os.environ.get('TEST_DATABASE_URL')
         app.config['SQLALCHEMY_DATABASE_URI'] = test_url
         db.create_all()
+        self.client = app.test_client()
+        self.fake = Factory.create()
 
     def tearDown(self):
         """Method to destroy/free up test resources once a test is run."""
+        db.session.remove()
+        db.drop_all()
         app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-        if os.path.exists('tests/test.db'):
-            os.remove('tests/test.db')
+        
