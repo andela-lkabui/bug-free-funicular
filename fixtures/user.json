@@ -1,0 +1,11 @@
+[
+    {
+        "model": "models.User",
+        "records": [
+            {
+                "user_id": 1,
+                "username": "Python Guru"
+            }
+        ]
+    }
+]
