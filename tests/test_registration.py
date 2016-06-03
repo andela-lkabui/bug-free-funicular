@@ -4,9 +4,9 @@ from models import User
 
 class TestRegistration(TestBase):
     """Create tests for user registration routes."""
+
     fixtures = ['user.json']
-    # import ipdb; ipdb.set_trace()
-    
+     
     def test_successful_registration(self):
         """Test successful registration when valid username and password is
         provided."""
@@ -53,7 +53,8 @@ class TestRegistration(TestBase):
         self.assertTrue(b'Username missing' in response.data)
 
     def test_registration_invalid_credentials(self):
-        """Test registration when username exists."""
+        """Test registration when neither a username nor a password is provided.
+        """
         user = {
             'username': None,
             'password': None
@@ -67,11 +68,11 @@ class TestRegistration(TestBase):
         self.assertTrue(b'Username missing' in response.data)
 
     def test_registration_existing_username(self):
+        """Test registration when username already exists."""
         # Assert that there is a fixture already
         self.assertEqual(len(User.query.all()), 1)
         username = User.query.first().username
         password = self.fake.password()
-
         user = {
             'username': username,
             'password': password
