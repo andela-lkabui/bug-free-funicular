@@ -1,0 +1,21 @@
+language: python
+python:
+  - "2.7"
+
+before_install:
+  - "pip install -r requirements.txt"
+install:
+  - "pip install coveralls"
+script:
+  - coverage run -m unittest discover tests
+after_success:
+  - coveralls
+branches:
+  only:
+  - develop
+services:
+  - mysql
+env:
+  global:
+    - SECRET_KEY='ThiS Is a VErY pRIVaTE SecRet KeY!'
+    - TEST_DATABASE_URL='mysql://travis:""@127.0.0.1:3306/funicular'
