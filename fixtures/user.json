@@ -4,7 +4,8 @@
         "records": [
             {
                 "user_id": 1,
-                "username": "Python Guru"
+                "username": "pythonista",
+                "password_hash": "$6$rounds=659657$5wwrJR2DOQEtTlLs$NbftN85V4KinoLiW3Wu8ZJvySwr/hsaC5zeoUyLNJE7Zd/RM3HSWx5Ij42taabKXhmMlrVoW04IXF0L8R9Ca20"
             }
         ]
     }
