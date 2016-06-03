@@ -1,7 +1,8 @@
 language: python
 python:
   - "2.7"
-
+before_script:
+  - "mysql -e 'create database funicular_test;'"
 before_install:
   - "pip install -r requirements.txt"
   - "pip install MySQL-Python"
@@ -16,7 +17,3 @@ branches:
   - develop
 services:
   - mysql
-env:
-  global:
-    - SECRET_KEY='ThiS Is a VErY pRIVaTE SecRet KeY!'
-    - TEST_DATABASE_URL='mysql://root:""@127.0.0.1:3306/funicular'
