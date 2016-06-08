@@ -24,7 +24,6 @@ class Outlets(db.Model):
 class Goods(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
-    price = db.Column(db.Integer)
     necessary = db.Column(db.Boolean)
 
     def __repr__(self):
@@ -74,6 +73,28 @@ class User(db.Model):
 
         user = User.query.get(data.get('id'))
         return user
+
+
+class GoodsPurchased(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.column(db.Integer, db.ForeignKey('user.user_id'))
+    user = db.relationship(
+        'User',
+        backref=db.backref('goodspurchased', lazy='dynamic'))
+    good_id = db.column(db.Integer, db.ForeignKey('goods.id'))
+    goods = db.relationship(
+        'Goods',
+        backref=db.backref('goodspurchased', lazy='dynamic'))
+    outlet_id = db.column(db.Integer, db.ForeignKey('outlets.id'))
+    outlets = db.relationship(
+        'Outlets',
+        backref=db.backref('goodspurchased', lazy='dynamic'))
+    price = db.column(db.Integer)
+    purchase_date = db.column(db.DateTime)
+
+    def __repr__(self):
+        return '<GoodsPurchased {0}>'.format(self.price)
+
 
 if __name__ == '__main__':
     ans = input('\n\nProceed to create database? [y|n] \
