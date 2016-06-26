@@ -23,8 +23,11 @@ class TestBase(unittest.TestCase, FixturesMixin):
         self.client = app.test_client()
         self.fake = Factory.create()
         # import ipdb; ipdb.set_trace()
-
+        
     def tearDown(self):
         """Method to destroy/free up test resources once a test is run."""
         db.session.remove()
         db.drop_all()
+        test_db_path = test_url[10::]
+        if os.path.exists(test_db_path):
+            os.remove(test_db_path)
