@@ -1,7 +1,8 @@
 from flask.ext.wtf import Form
-from wtforms import StringField, BooleanField
+from wtforms import StringField, PasswordField
 
 
 class SignupForm(Form):
     username = StringField()
-    password = StringField()
+    password = PasswordField()
+    password2 = PasswordField(label='Confirm Password')
