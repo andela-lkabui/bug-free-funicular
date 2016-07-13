@@ -1,8 +1,9 @@
 import json
 
-from flask import request
+from flask import request, render_template
 from flask_restful import reqparse
 from jinja2 import Environment, PackageLoader
+from forms import SignupForm
 
 from models import Outlets, Goods, Services, User
 from serializer import OutletSchema, GoodsSchema, ServicesSchema
@@ -16,6 +17,12 @@ def hello():
     env = Environment(loader=PackageLoader('app', 'templates'))
     template = env.get_template('home.html')
     return template.render()
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    form = SignupForm()
+    return render_template('signup.html', form=form)
+
 
 
 @app.route('/outlets/', methods=['GET', 'POST'])
