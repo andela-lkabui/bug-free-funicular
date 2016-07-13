@@ -1,0 +1,60 @@
+#landing_div {
+	background-image: url('/static/images/piggy.jpeg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    min-height: 52em;
+}
+
+#signin_btn {
+    margin-top: 1em;
+    margin-right: 4em;
+    height: 3em;
+    width: 8%;
+    color: #606060;
+    font-weight: bold;
+    border-color: #606060;
+}
+
+#app_name {
+    text-align: center;
+    color: #606060;
+}
+
+#major_tagline {
+    text-align: center;
+}
+
+#major_tagline p {
+    font-size: 3em;
+    color: #606060;
+    font-weight: bold;
+    margin: 1em 4em;
+}
+
+#minor_tagline {
+    text-align: center;
+}
+
+#minor_tagline p {
+    color: #606060;
+    margin: 0 9em;
+}
+
+#signup_div {
+    margin-top: 5em;
+}
+
+#signup_div button {
+    width: 10%;
+    height: 4em;
+    color: #ffffff;
+    font-weight: bold;
+    border-color: #606060;
+    border-width: medium;
+    background-color: #0379CE;
+}
+
+.btn-default {
+    background-image: none;
+    text-shadow: none;
+}
