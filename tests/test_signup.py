@@ -24,5 +24,6 @@ class TestSignUp(TestBase):
         )
         # would have preferred to use the regexp assert
         self.assertIn(
-            'name="password"',
-            response.data)
+            'type="password"',
+            response.data,
+            msg="Expected to find a HTML element of type password")
