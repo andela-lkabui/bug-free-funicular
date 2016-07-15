@@ -7,7 +7,7 @@ from jinja2 import Environment, PackageLoader
 from models import Outlets, Goods, Services, User
 from serializer import OutletSchema, GoodsSchema, ServicesSchema
 from restful.resources import app, api, db
-from restful.resources import UserResource, LoginResource
+from restful.resources import UserResource, LoginResource, AccountResource
 
 not_found = {'detail': 'Not found.'}
 
@@ -199,12 +199,9 @@ def services_detail(service_id):
         return json.dumps(not_found), 400
 
 
-@app.route('/accounts')
-def accounts():
-    return 'Your accounts!'
-
 api.add_resource(UserResource, '/auth/new/')
 api.add_resource(LoginResource, '/auth/logout/', '/auth/login/')
+api.add_resource(AccountResource, '/accounts/')
 
 if __name__ == '__main__':
     app.run(debug=True)

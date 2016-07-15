@@ -87,3 +87,10 @@ class LoginResource(Resource):
                     ), 400
             return json.dumps({'message': 'User does not exist'}), 400
         return json.dumps({'message': 'Username is required'}), 400
+
+
+class AccountResource(Resource):
+    """
+    Class encapsulates restful implementation of the Accounts resource.
+    """
+    pass
