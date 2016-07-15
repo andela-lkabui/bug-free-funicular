@@ -215,3 +215,66 @@ class GoodsResource(Resource):
             db.session.commit()
             return '', 204
         return json.dumps(not_found), 400
+
+
+class OutletsResource(Resource):
+    """
+    Class encapsulates restful implementation of the Outlets resource.
+    """
+
+    def __init__(self):
+        self.outlet_schema = OutletSchema()
+
+    def get(self):
+        # list view
+        all_outlets = Outlets.query.all()
+        json_result = outlet_schema.dumps(all_outlets, many=True)
+        return json_result.data, 200
+
+    def post(self):
+        # specify data fields to look out for from user
+        parser = reqparse.RequestParser()
+        parser.add_argument('name')
+        parser.add_argument('postal_address')
+        values = parser.parse_args()
+        # create outlet object from data
+        new_outlet = Outlets(**values)
+        db.session.add(new_outlet)
+        db.session.commit()
+        # display details of object just created
+        json_result = outlet_schema.dumps(new_outlet)
+        return json_result.data, 201
+
+    def get(self, outlet_id):
+        one_outlet = Outlets.query.get(outlet_id)
+        json_result = outlet_schema.dumps(one_outlet)
+        return json_result.data, 200
+
+    def put(self, outlet_id):
+        # get the update data from the client
+        parser = reqparse.RequestParser()
+        parser.add_argument('name')
+        parser.add_argument('postal_address')
+        values = parser.parse_args()
+        # fetch the object from the DB
+        edit_outlet = Outlets.query.get(outlet_id)
+        if edit_outlet:
+            # update object properties only when new values have been provided
+            # by the client
+            if values.get('name'):
+                edit_outlet.name = values.get('name')
+            if values.get('postal_address'):
+                edit_outlet.postal_address = values.get('postal_address')
+            db.session.add(edit_outlet)
+            db.session.commit()
+            json_result = outlet_schema.dumps(edit_outlet)
+            return json_result.data, 200
+        return json.dumps(not_found), 400
+
+    def delete(self, outlet_id):
+        del_outlet = Outlets.query.get(outlet_id)
+        if del_outlet:
+            db.session.delete(del_outlet)
+            db.session.commit()
+            return '', 204
+        return json.dumps(not_found), 400
