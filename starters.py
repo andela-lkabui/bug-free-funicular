@@ -1,8 +1,9 @@
 import json
 
-from flask import request
+from flask import request, render_template
 from flask_restful import reqparse
 from jinja2 import Environment, PackageLoader
+from forms import SignupForm
 
 from models import Outlets, Goods, Services, User
 from serializer import OutletSchema, GoodsSchema, ServicesSchema
@@ -246,9 +247,6 @@ def logout():
 
 @app.route('/auth/new/', methods=['GET', 'POST'])
 def registration():
-    if request.method == 'GET':
-        return 'You are at the user registration url'
-
     if request.method == 'POST':
         parser = reqparse.RequestParser()
         parser.add_argument('username')
@@ -270,6 +268,7 @@ def registration():
                     ), 201
             return json.dumps({'message': 'Password missing'}), 400
         return json.dumps({'message': 'Username missing'}), 400
+
 
 if __name__ == '__main__':
     app.run(debug=True)
