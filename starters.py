@@ -3,7 +3,6 @@ import json
 from flask import request, render_template
 from flask_restful import reqparse
 from jinja2 import Environment, PackageLoader
-from forms import SignupForm
 
 from models import Outlets, Goods, Services, User
 from serializer import OutletSchema, GoodsSchema, ServicesSchema
