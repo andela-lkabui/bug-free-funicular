@@ -18,12 +18,6 @@ def hello():
     template = env.get_template('home.html')
     return template.render()
 
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    form = SignupForm()
-    return render_template('signup.html', form=form)
-
-
 
 @app.route('/outlets/', methods=['GET', 'POST'])
 def outlets_list():
@@ -253,9 +247,6 @@ def logout():
 
 @app.route('/auth/new/', methods=['GET', 'POST'])
 def registration():
-    if request.method == 'GET':
-        return 'You are at the user registration url'
-
     if request.method == 'POST':
         parser = reqparse.RequestParser()
         parser.add_argument('username')
@@ -277,6 +268,7 @@ def registration():
                     ), 201
             return json.dumps({'message': 'Password missing'}), 400
         return json.dumps({'message': 'Username missing'}), 400
+
 
 if __name__ == '__main__':
     app.run(debug=True)
