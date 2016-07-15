@@ -1,12 +1,13 @@
 import json
 
-from flask import request, render_template
+from flask import request
 from flask_restful import reqparse
 from jinja2 import Environment, PackageLoader
 
 from models import Outlets, Goods, Services, User
 from serializer import OutletSchema, GoodsSchema, ServicesSchema
-from app import app, db
+from restful.resources import app, api, db
+from restful.resources import UserResource
 
 not_found = {'detail': 'Not found.'}
 
@@ -233,41 +234,7 @@ def login():
         return json.dumps({'message': 'Username is required'}), 400
 
 
-@app.route('/auth/logout/')
-def logout():
-    user = User.verify_auth_token(request.headers.get('username'))
-    if user:
-        user.is_active = False
-        db.session.add(user)
-        db.session.commit()
-        return json.dumps({'message': 'User successfully logged out'}), 200
-    return json.dumps({'message': 'User is not logged in'}), 400
-
-
-@app.route('/auth/new/', methods=['GET', 'POST'])
-def registration():
-    if request.method == 'POST':
-        parser = reqparse.RequestParser()
-        parser.add_argument('username')
-        parser.add_argument('password')
-        values = parser.parse_args()
-
-        if values.get('username'):
-            if values.get('password'):
-                # check if a user by provided username already exists
-                exists = User.query.filter_by(username=values.get('username')).first()
-                if exists:
-                    return json.dumps({'message': 'User already exists'}), 400
-                user = User(username=values.get('username'))
-                user.hash_password(values.get('password'))
-                db.session.add(user)
-                db.session.commit()
-                return json.dumps(
-                                {'message': 'User successfully registered'}
-                    ), 201
-            return json.dumps({'message': 'Password missing'}), 400
-        return json.dumps({'message': 'Username missing'}), 400
-
+api.add_resource(UserResource, '/auth/logout/', '/auth/new/')
 
 if __name__ == '__main__':
     app.run(debug=True)
