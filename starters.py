@@ -8,7 +8,8 @@ from models import Outlets, Goods, Services, User
 from serializer import OutletSchema, GoodsSchema, ServicesSchema
 from restful.resources import app, api, db
 from restful.resources import (
-    UserResource, LoginResource, AccountResource, ServicesResource
+    UserResource, LoginResource, AccountResource, ServicesResource,
+    GoodsResource
     )
 
 not_found = {'detail': 'Not found.'}
@@ -82,71 +83,11 @@ def outlets_detail(outlet_id):
             return '', 204
         return json.dumps(not_found), 400
 
-
-@app.route('/goods/', methods=['GET', 'POST'])
-def goods_list():
-    goods_schema = GoodsSchema()
-    if request.method == 'GET':
-        all_goods = Goods.query.all()
-        json_result = goods_schema.dumps(all_goods, many=True)
-        return json_result.data, 200
-
-    if request.method == 'POST':
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('price')
-        parser.add_argument('necessary')
-        values = parser.parse_args()
-
-        result = goods_schema.load(values)
-        db.session.add(result.data)
-        db.session.commit()
-
-        json_result = goods_schema.dumps(result.data)
-        return json_result.data, 201
-
-
-@app.route('/goods/<good_id>/', methods=['GET', 'PUT', 'DELETE'])
-def goods_detail(good_id):
-    goods_schema = GoodsSchema()
-    if request.method == 'GET':
-        get_good = Goods.query.get(good_id)
-        json_result = goods_schema.dumps(get_good)
-        return json_result.data, 200
-
-    if request.method == 'PUT':
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('price')
-        parser.add_argument('necessary')
-        values = parser.parse_args()
-        # fetch the object from the DB
-        edit_good = Goods.query.get(good_id)
-        if edit_good:
-            if values.get('name'):
-                edit_good.name = values.get('name')
-            if values.get('price'):
-                edit_good.price = values.get('price')
-            if values.get('necessary') == 'True':
-                edit_good.necessary = values.get('necessary')
-            db.session.add(edit_good)
-            db.session.commit()
-            json_result = goods_schema.dumps(edit_good)
-            return json_result.data, 200
-        return json.dumps(not_found), 400
-
-    if request.method == 'DELETE':
-        del_good = Goods.query.get(good_id)
-        if del_good:
-            db.session.delete(del_good)
-            db.session.commit()
-            return '', 204
-        return json.dumps(not_found), 400
-
 api.add_resource(UserResource, '/auth/new/')
 api.add_resource(LoginResource, '/auth/logout/', '/auth/login/')
 api.add_resource(AccountResource, '/accounts/')
 api.add_resource(ServicesResource, '/services/', '/services/<int:service_id>/')
+api.add_resource(GoodsResource, '/goods/', '/goods/<int:good_id>/')
 
 if __name__ == '__main__':
     app.run(debug=True)
