@@ -7,7 +7,7 @@ from jinja2 import Environment, PackageLoader
 from models import Outlets, Goods, Services, User
 from serializer import OutletSchema, GoodsSchema, ServicesSchema
 from restful.resources import app, api, db
-from restful.resources import UserResource
+from restful.resources import UserResource, LoginResource
 
 not_found = {'detail': 'Not found.'}
 
@@ -203,38 +203,8 @@ def services_detail(service_id):
 def accounts():
     return 'Your accounts!'
 
-
-@app.route('/auth/login/', methods=['GET', 'POST'])
-def login():
-    if request.method == 'GET':
-        return 'You are at the user login url'
-
-    if request.method == 'POST':
-        parser = reqparse.RequestParser()
-        parser.add_argument('username')
-        parser.add_argument('password')
-        values = parser.parse_args()
-
-        if values.get('username'):
-            user = User.query.filter_by(username=values.get('username')).first()
-            if user:
-                if values.get('password'):
-                    if user.verify_password(values.get('password')):
-                        token = user.generate_auth_token()
-                        decoded = token.decode('ascii')
-                        user.is_active = True
-                        db.session.add(user)
-                        db.session.commit()
-                        return json.dumps({'token': decoded}), 200
-                    return json.dumps({'message': 'Incorrect password'}), 400
-                return json.dumps(
-                        {'message': 'Password is required'}
-                    ), 400
-            return json.dumps({'message': 'User does not exist'}), 400
-        return json.dumps({'message': 'Username is required'}), 400
-
-
-api.add_resource(UserResource, '/auth/logout/', '/auth/new/')
+api.add_resource(UserResource, '/auth/new/')
+api.add_resource(LoginResource, '/auth/logout/', '/auth/login/')
 
 if __name__ == '__main__':
     app.run(debug=True)
