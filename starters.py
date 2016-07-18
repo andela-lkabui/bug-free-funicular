@@ -23,7 +23,7 @@ def hello():
 
 api.add_resource(UserResource, '/auth/new/')
 api.add_resource(LoginResource, '/auth/logout/', '/auth/login/')
-api.add_resource(AccountResource, '/accounts/')
+api.add_resource(AccountResource, '/accounts/', '/accounts/<int:account_id>/')
 api.add_resource(ServicesResource, '/services/', '/services/<int:service_id>/')
 api.add_resource(GoodsResource, '/goods/', '/goods/<int:good_id>/')
 api.add_resource(OutletsResource, '/outlets/', '/outlets/<int:outlet_id>/')
