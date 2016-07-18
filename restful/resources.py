@@ -101,19 +101,22 @@ class AccountResource(Resource):
         Create a new Account where the owner will be the currently logged in
         user.
         """
-        current_user = User.verify_auth_token(request.headers.get('username'))
-        if current_user:
-            parser = reqparse.RequestParser()
-            parser.add_argument('name')
-            parser.add_argument('phone_no')
-            parser.add_argument('account_no')
-            parser.add_argument('account_provider')
-            values = parser.parse_args()
-            account = Accounts(**values)
-            account.user_id = current_user.user_id
-            db.session.add(account)
-            db.session.commit()
-            return {'message': 'Account created'}, 201
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('phone_no')
+                parser.add_argument('account_no')
+                parser.add_argument('account_provider')
+                values = parser.parse_args()
+                account = Accounts(**values)
+                account.user_id = current_user.user_id
+                db.session.add(account)
+                db.session.commit()
+                return {'message': 'Account created'}, 201
+            return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
 
 
