@@ -6,10 +6,12 @@ class TestRegistration(TestBase):
     """Create tests for user registration routes."""
 
     fixtures = ['user.json']
-     
+
     def test_successful_registration(self):
-        """Test successful registration when valid username and password is
-        provided."""
+        """
+        Test successful registration when valid username and password is
+        provided.
+        """
         username = self.fake.user_name()
         password = self.fake.password()
         user = {
