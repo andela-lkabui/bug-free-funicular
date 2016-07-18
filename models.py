@@ -17,6 +17,7 @@ manager.add_command('db', MigrateCommand)
 
 class Outlets(db.Model):
     """ORM for shopping outlets that sell goods and/or services."""
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     postal_address = db.Column(db.String(100))
@@ -143,15 +144,15 @@ class Accounts(db.Model):
     """ORM for monetary Accounts."""
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), blank=False)
-    phone_no = db.Column(db.String(15), blank=False)
-    account_no = db.Column(db.String(20), blank=False)
-    account_provider = db.Column(db.String(150), blank=False)
+    name = db.Column(db.String(150), nullable=False)
+    phone_no = db.Column(db.String(15), nullable=False)
+    account_no = db.Column(db.String(20), nullable=False)
+    account_provider = db.Column(db.String(150), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
 
     def __repr__(self):
         """Defines custom representation for Accounts model instances."""
-        return '<Accounts {0}>'.format(self.name)      
+        return '<Accounts {0}>'.format(self.name) 
 
 
 if __name__ == '__main__':
