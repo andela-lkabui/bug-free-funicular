@@ -67,6 +67,7 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=False)
     purchases = db.relationship(
         'GoodsPurchased', backref='user', lazy='dynamic')
+    accounts = db.relationship('Accounts', backref='user', lazy='dynamic')
 
     def __repr__(self):
         """Defines custom representation for User model instances."""
