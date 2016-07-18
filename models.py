@@ -138,5 +138,21 @@ class GoodsPurchased(db.Model):
         """Defines custom representation for GoodsPurchased model instances."""
         return '<GoodsPurchased {0}>'.format(self.price)
 
+
+class Accounts(db.Model):
+    """ORM for monetary Accounts."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), blank=False)
+    phone_no = db.Column(db.String(15), blank=False)
+    account_no = db.Column(db.String(20), blank=False)
+    account_provider = db.Column(db.String(150), blank=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+
+    def __repr__(self):
+        """Defines custom representation for Accounts model instances."""
+        return '<Accounts {0}>'.format(self.name)      
+
+
 if __name__ == '__main__':
     manager.run()
