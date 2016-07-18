@@ -1,9 +1,10 @@
 import json
 
+from flask import request
 from flask_restful import Resource, Api, reqparse
 
 from app import app, db
-from models import User
+from models import User, Accounts
 from serializer import ServicesSchema
 
 api = Api(app)
@@ -94,7 +95,26 @@ class AccountResource(Resource):
     """
     Class encapsulates restful implementation of the Accounts resource.
     """
-    pass
+
+    def post(self):
+        """
+        Create a new Account where the owner will be the currently logged in
+        user.
+        """
+        current_user = User.verify_auth_token(request.headers.get('username'))
+        if current_user:
+            parser = reqparse.RequestParser()
+            parser.add_argument('name')
+            parser.add_argument('phone_no')
+            parser.add_argument('account_no')
+            parser.add_argument('account_provider')
+            values = parser.parse_args()
+            account = Accounts(**values)
+            account.user_id = current_user.user_id
+            db.session.add(account)
+            db.session.commit()
+            return {'message': 'Account created'}, 201
+        return {'message': 'Unauthenticated request'}, 401
 
 
 class ServicesResource(Resource):
