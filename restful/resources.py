@@ -81,7 +81,7 @@ class LoginResource(Resource):
                         user.is_active = True
                         db.session.add(user)
                         db.session.commit()
-                        return json.dumps({'token': decoded}), 200
+                        return {'token': decoded}, 200
                     return json.dumps({'message': 'Incorrect password'}), 400
                 return json.dumps(
                         {'message': 'Password is required'}
