@@ -40,7 +40,7 @@ class TestAccount(TestBase):
         self.assertEqual(ac.user.username, user.get('username'))
         # import ipdb; ipdb.set_trace()
 
-    def test_account_creation_no_authentication(self):
+    def test_account_creation_without_authentication(self):
         """
         Test attempt to create Account when request is not authenticated.
         """
@@ -57,9 +57,9 @@ class TestAccount(TestBase):
         ac = Accounts.query.filter_by(name=data.get('name')).first()
         self.assertFalse(ac)
 
-    def test_account_creation_no_account_name(self):
+    def test_account_creation_without_account_name(self):
         """
-        Test attempt to create a new Account when account name is not provided.
+        Test attempt to create a new Account when `name` is not provided.
         """
         # login using credentials of the fixtures user
         user = {
@@ -84,9 +84,112 @@ class TestAccount(TestBase):
         self.assertRegexpMatches(
             response.data,
             'Account name[,\sa-zA-Z]+required',
-            msg='Expected account name ... required to be part of the\
+            msg='Expected `account name ... required` to be part of the\
                 error message'
         )
         # Ensure no account object has been persisted to DB
         ac = Accounts.query.filter_by(name=data.get('account_no')).first()
+        self.assertFalse(ac)
+
+    def test_account_creation_without_phone_no(self):
+        """
+        Test attempt to create a new Account when `phone_no` is not provided.
+        """
+        # login using credentials of the fixtures user
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        data = {
+            'name': self.fake.name(),
+            'account_no': self.fake.postalcode_plus4(),
+            'account_provider': self.fake.name()
+        }
+        headers = {
+            'username': token
+        }
+        response = self.client.post('/accounts/', data=data, headers=headers)
+        self.assertEqual(response.status, '400 BAD REQUEST')
+        self.assertEqual(response.status_code, 400)
+        self.assertRegexpMatches(
+            response.data,
+            'phone no[,\sa-zA-Z]+required',
+            msg='Expected `phone no ... required` to be part of the\
+                error message'
+        )
+        # Ensure no account object has been persisted to DB
+        ac = Accounts.query.filter_by(name=data.get('name')).first()
+        self.assertFalse(ac)
+
+    def test_account_creation_without_account_num(self):
+        """
+        Test attempt to create a new Account when `account_no` is not provided.
+        """
+        # login using credentials of the fixtures user
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        data = {
+            'name': self.fake.name(),
+            'phone_no': self.fake.phone_number(),
+            'account_provider': self.fake.name()
+        }
+        headers = {
+            'username': token
+        }
+        response = self.client.post('/accounts/', data=data, headers=headers)
+        self.assertEqual(response.status, '400 BAD REQUEST')
+        self.assertEqual(response.status_code, 400)
+        self.assertRegexpMatches(
+            response.data,
+            'account no[,\sa-zA-Z]+required',
+            msg='Expected `account no ... required` to be part of the\
+                error message'
+        )
+        # Ensure no account object has been persisted to DB
+        ac = Accounts.query.filter_by(name=data.get('name')).first()
+        self.assertFalse(ac)
+
+    def test_account_creation_without_account_provider(self):
+        """
+        Test attempt to create a new Account when `account_provider` is not
+        included.
+        """
+        # login using credentials of the fixtures user
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        data = {
+            'name': self.fake.name(),
+            'phone_no': self.fake.phone_number(),
+            'account_no': self.fake.postalcode_plus4()
+        }
+        headers = {
+            'username': token
+        }
+        response = self.client.post('/accounts/', data=data, headers=headers)
+        self.assertEqual(response.status, '400 BAD REQUEST')
+        self.assertEqual(response.status_code, 400)
+        self.assertRegexpMatches(
+            response.data,
+            'account provider[,\sa-zA-Z]+required',
+            msg='Expected `account provider ... required` to be part of the\
+                error message'
+        )
+        # Ensure no account object has been persisted to DB
+        ac = Accounts.query.filter_by(name=data.get('name')).first()
         self.assertFalse(ac)

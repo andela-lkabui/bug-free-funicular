@@ -119,7 +119,7 @@ class AccountResource(Resource):
                     return {'message': 'Account created'}, 201
                 return {
                         'message': 'Account name, phone no, account no\
-                        and account provider required'
+                        and account provider are all required'
                         }, 400
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
