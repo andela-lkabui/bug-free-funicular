@@ -51,7 +51,7 @@ class TestRegistration(TestBase):
         self.assertEqual(response.status_code, 400)
         # Assert that user has not been created in the database
         # Testing for length 1 to account for the fixture
-        self.assertEqual(len(User.query.all()), 1)
+        self.assertEqual(len(User.query.all()), 2)
         self.assertTrue(b'Username missing' in response.data)
 
     def test_registration_invalid_credentials(self):
@@ -66,13 +66,13 @@ class TestRegistration(TestBase):
         self.assertEqual(response.status_code, 400)
         # Assert that user has not been created in the database
         # Testing for length 1 to account for the fixture
-        self.assertEqual(len(User.query.all()), 1)
+        self.assertEqual(len(User.query.all()), 2)
         self.assertTrue(b'Username missing' in response.data)
 
     def test_registration_existing_username(self):
         """Test registration when username already exists."""
         # Assert that there is a fixture already
-        self.assertEqual(len(User.query.all()), 1)
+        self.assertEqual(len(User.query.all()), 2)
         username = User.query.first().username
         password = self.fake.password()
         user = {
