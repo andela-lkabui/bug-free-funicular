@@ -111,11 +111,16 @@ class AccountResource(Resource):
                 parser.add_argument('account_no')
                 parser.add_argument('account_provider')
                 values = parser.parse_args()
-                account = Accounts(**values)
-                account.user_id = current_user.user_id
-                db.session.add(account)
-                db.session.commit()
-                return {'message': 'Account created'}, 201
+                if None not in values.values() and '' not in values.values():
+                    account = Accounts(**values)
+                    account.user_id = current_user.user_id
+                    db.session.add(account)
+                    db.session.commit()
+                    return {'message': 'Account created'}, 201
+                return {
+                        'message': 'Account name, phone no, account no\
+                        and account provider required'
+                        }, 400
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
 
