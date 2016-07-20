@@ -305,3 +305,31 @@ class TestAccount(TestBase):
         self.assertEqual(response.status_code, 404)
         self.assertTrue(
             'Account does not exist' in response.data)
+
+    def test_account_resource_edit_functionality(self):
+        """
+        Test edit functionality for the account resource.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        data = {
+            'name': self.fake.name(),
+            'phone_no': self.fake.phone_number(),
+        }
+        ac = Accounts.query.get(1)
+        response = self.client.put('/accounts/1/', headers=headers, data=data)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(data.get('name') in response.data)
+        self.assertTrue(data.get('phone_no') in response.data)
+        ac_edit = Accounts.query.get(1)
+        self.assertNotEqual(ac.name, ac_edit.name)
