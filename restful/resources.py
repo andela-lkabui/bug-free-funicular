@@ -168,9 +168,10 @@ class AccountDetailResource(Resource):
                 if ac:
                     if ac.user_id == current_user.user_id:
                         result = self.accounts_schema.dumps(ac)
-                        return result.data, 200
+                        result_dict = json.loads(result.data)
+                        return result_dict, 200
                     return {
-                            'message': 'Access to account is restricted to owners'
+                            'message': 'Access to account is restricted to owner'
                         }, 403
                 return {'message': 'Account does not exist'}, 404
             return {'message': 'Invalid token'}, 400
