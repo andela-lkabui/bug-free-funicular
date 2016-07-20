@@ -219,3 +219,35 @@ class TestAccount(TestBase):
         ac = Accounts.query.filter_by(user_id=2).first()
         # ensure this account doesn't appear in response
         self.assertNotIn(ac.name, response.data)
+
+    def test_accounts_list_view_without_authentication(self):
+        """
+        Test response when Account list view is requested without an
+        authentication token.
+        """
+        response = self.client.get('/accounts/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue('Unauthenticated request' in response.data)
+
+    def test_accounts_detail_view_with_authenticated_user(self):
+        """
+        Test response when Account resource detail view is requested by an
+        authenticated user.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/accounts/1/', headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        ac1 = Accounts.query.get(1)
+        self.assertTrue(ac1.name in response.data)
