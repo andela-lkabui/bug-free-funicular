@@ -8,8 +8,8 @@ from models import Outlets, Goods, Services, User
 from serializer import OutletSchema, GoodsSchema, ServicesSchema
 from restful.resources import app, api, db
 from restful.resources import (
-    UserResource, LoginResource, AccountResource, ServicesResource,
-    GoodsResource, OutletsResource
+    UserResource, LoginResource, AccountListResource, AccountDetailResource,
+    ServicesResource, GoodsResource, OutletsResource
     )
 
 not_found = {'detail': 'Not found.'}
@@ -23,7 +23,8 @@ def hello():
 
 api.add_resource(UserResource, '/auth/new/')
 api.add_resource(LoginResource, '/auth/logout/', '/auth/login/')
-api.add_resource(AccountResource, '/accounts/', '/accounts/<int:account_id>/')
+api.add_resource(AccountListResource, '/accounts/')
+api.add_resource(AccountDetailResource, '/accounts/<int:account_id>/')
 api.add_resource(ServicesResource, '/services/', '/services/<int:service_id>/')
 api.add_resource(GoodsResource, '/goods/', '/goods/<int:good_id>/')
 api.add_resource(OutletsResource, '/outlets/', '/outlets/<int:outlet_id>/')

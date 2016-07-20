@@ -91,16 +91,30 @@ class LoginResource(Resource):
         return json.dumps({'message': 'Username is required'}), 400
 
 
-class AccountResource(Resource):
-    """
-    Class encapsulates restful implementation of the Accounts resource.
-    """
+class AccountListResource(Resource):
 
     def __init__(self):
         """
         Instantiates class instance variables upon object instance creation.
         """
         self.accounts_schema = AccountsSchema()
+
+    def get(self):
+        """
+        List all accounts belonging to the currently logged in user.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                all_accounts = Accounts.query.filter_by(
+                    user_id=current_user.user_id
+                )
+                result = self.accounts_schema.dumps(all_accounts, many=True)
+                result_dict = json.loads(result.data)
+                return result_dict, 200
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def post(self):
         """
@@ -130,22 +144,38 @@ class AccountResource(Resource):
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
 
-    def get(self):
+
+class AccountDetailResource(Resource):
+    """
+    Class encapsulates restful implementation of the Accounts detail routes.
+    """
+
+    def __init__(self):
         """
-        List all accounts belonging to the currently logged in user.
+        Instantiates class instance variables upon object instance creation.
+        """
+        self.accounts_schema = AccountsSchema()
+
+    def get(self, account_id):
+        """
+        Returns details of Account whose id is `account_id`.
         """
         token = request.headers.get('username')
         if token:
             current_user = User.verify_auth_token(token)
             if current_user:
-                all_accounts = Accounts.query.filter_by(
-                    user_id=current_user.user_id
-                )
-                result = self.accounts_schema.dumps(all_accounts, many=True)
-                result_dict = json.loads(result.data)
-                return result_dict, 200
-            return {'message': 'Invalid token'}, 403
+                ac = Accounts.query.get(account_id)
+                if ac:
+                    if ac.user_id == current_user.user_id:
+                        result = self.accounts_schema.dumps(ac)
+                        return result.data, 200
+                    return {
+                            'message': 'Access to account is restricted to owners'
+                        }, 403
+                return {'message': 'Account does not exist'}, 404
+            return {'message': 'Invalid token'}, 400
         return {'message': 'Unauthenticated request'}, 401
+
 
 
 class ServicesResource(Resource):
