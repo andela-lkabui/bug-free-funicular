@@ -5,7 +5,7 @@ from flask_restful import Resource, Api, reqparse
 
 from app import app, db
 from models import User, Accounts
-from serializer import ServicesSchema
+from serializer import ServicesSchema, AccountsSchema
 
 api = Api(app)
 
@@ -96,6 +96,12 @@ class AccountResource(Resource):
     Class encapsulates restful implementation of the Accounts resource.
     """
 
+    def __init__(self):
+        """
+        Instantiates class instance variables upon object instance creation.
+        """
+        self.accounts_schema = AccountsSchema()
+
     def post(self):
         """
         Create a new Account where the owner will be the currently logged in
@@ -121,6 +127,23 @@ class AccountResource(Resource):
                         'message': 'Account name, phone no, account no\
                         and account provider are all required'
                         }, 400
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
+
+    def get(self):
+        """
+        List all accounts belonging to the currently logged in user.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                all_accounts = Accounts.query.filter_by(
+                    user_id=current_user.user_id
+                )
+                result = self.accounts_schema.dumps(all_accounts, many=True)
+                result_dict = json.loads(result.data)
+                return result_dict, 200
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
 
