@@ -7,7 +7,7 @@ from models import User, Accounts
 class TestAccount(TestBase):
     """Test CRUD operations and their respective permissions."""
 
-    fixtures = ['user.json']
+    fixtures = ['user.json', 'accounts.json']
 
     def test_successful_account_creation(self):
         """
@@ -193,3 +193,29 @@ class TestAccount(TestBase):
         # Ensure no account object has been persisted to DB
         ac = Accounts.query.filter_by(name=data.get('name')).first()
         self.assertFalse(ac)
+
+    def test_account_list_view_with_authenticated_user(self):
+        """
+        Test response when authenticated user requests list view.
+        """
+        # user should only see his/her accounts
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/accounts/', headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        json_data = json.loads(response.data)
+        self.assertEqual(len(json_data), 2)
+        # fetch account belonging to user-ruby
+        ac = Accounts.query.filter_by(user_id=2).first()
+        # ensure this account doesn't appear in response
+        self.assertNotIn(ac.name, response.data)
