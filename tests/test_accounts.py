@@ -251,3 +251,57 @@ class TestAccount(TestBase):
         self.assertEqual(response.status_code, 200)
         ac1 = Accounts.query.get(1)
         self.assertTrue(ac1.name in response.data)
+
+    def test_accounts_detail_view_without_authenticated_user(self):
+        """
+        Test response when Account resource detail view is requested by an
+        unauthenticated user.
+        """
+        response = self.client.get('/accounts/1/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue('Unauthenticated request' in response.data)
+
+    def test_accounts_detail_view_authenticated_user_not_owner(self):
+        """
+        Test response when Account resource detail view is requested and account
+        of specified id doesn't belong to current user.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/accounts/3/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            'Access to account is restricted to owner' in response.data)
+
+    def test_accounts_detail_view_non_existent_account_id(self):
+        """
+        Test response when Account resource detail view is requested with an id
+        that isn't available in the database.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/accounts/101/', headers=headers)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(
+            'Account does not exist' in response.data)
