@@ -326,10 +326,35 @@ class TestAccount(TestBase):
             'phone_no': self.fake.phone_number(),
         }
         ac = Accounts.query.get(1)
+        ac_name = ac.name
         response = self.client.put('/accounts/1/', headers=headers, data=data)
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(data.get('name') in response.data)
         self.assertTrue(data.get('phone_no') in response.data)
         ac_edit = Accounts.query.get(1)
-        self.assertNotEqual(ac.name, ac_edit.name)
+        self.assertNotEqual(ac_name, ac_edit.name)
+
+    def test_account_resource_delete_functionality(self):
+        """
+        Test delete functionality for the account resource.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/accounts/1/', headers=headers)
+        self.assertEqual(response.status, '204 NO CONTENT')
+        self.assertEqual(response.status_code, 204)
+        ac = Accounts.query.get(1)
+        self.assertFalse(ac)
+        response = self.client.get('/accounts/1/', headers=headers)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
