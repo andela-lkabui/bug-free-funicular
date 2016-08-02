@@ -27,7 +27,7 @@ class UserResource(Resource):
 
         if values.get('username'):
             if values.get('password'):
-                # check if a user by provided username already exists
+                # check if a user by provided username already s
                 exists = User.query.filter_by(username=values.get('username')).first()
                 if exists:
                     return json.dumps({'message': 'User already exists'}), 400
@@ -177,7 +177,30 @@ class AccountDetailResource(Resource):
             return {'message': 'Invalid token'}, 400
         return {'message': 'Unauthenticated request'}, 401
 
-
+    def put(self, account_id):
+        """
+        Updates account details with provided data.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                ac = Accounts.query.get(account_id)
+                if ac:
+                    if ac.user_id == current_user.user_id:
+                        if 'phone_no' in request.form and 'name' in request.form:
+                            ac.phone_no = request.form.get('phone_no')
+                            ac.name = request.form.get('name')
+                            result = self.accounts_schema.dumps(ac)
+                            result_dict = json.loads(result.data)
+                            return result_dict, 200
+                        return {'message': 'Missing data'}, 400
+                    return {
+                            'message': 'Access to account is restricted to owner'
+                        }, 401
+                return {'message': 'Account does not exist'}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 403
 
 class ServicesResource(Resource):
     """
