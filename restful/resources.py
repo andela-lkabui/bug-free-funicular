@@ -179,7 +179,7 @@ class AccountDetailResource(Resource):
 
     def put(self, account_id):
         """
-        Updates account details with provided data.
+        Updates account of id `account_id` with user provided data.
         """
         token = request.headers.get('username')
         if token:
@@ -191,6 +191,8 @@ class AccountDetailResource(Resource):
                         if 'phone_no' in request.form and 'name' in request.form:
                             ac.phone_no = request.form.get('phone_no')
                             ac.name = request.form.get('name')
+                            db.session.add(ac)
+                            db.session.commit()
                             result = self.accounts_schema.dumps(ac)
                             result_dict = json.loads(result.data)
                             return result_dict, 200
@@ -201,6 +203,27 @@ class AccountDetailResource(Resource):
                 return {'message': 'Account does not exist'}, 404
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 403
+
+    def delete(self, account_id):
+        """
+        Deletes Account of id `account_id`.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                ac = Accounts.query.get(account_id)
+                if ac:
+                    if ac.user_id == current_user.user_id:
+                        db.session.delete(ac)
+                        db.session.commit()
+                        return {}, 204
+                    return {
+                            'message': 'Access to account is restricted to owner'
+                        }, 401
+                return {'message': 'Account does not exist'}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
 class ServicesResource(Resource):
     """
