@@ -328,7 +328,7 @@ class TestAccount(TestBase):
         ac = Accounts.query.get(1)
         response = self.client.put('/accounts/1/', headers=headers, data=data)
         self.assertEqual(response.status, '200 OK')
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(data.get('name') in response.data)
         self.assertTrue(data.get('phone_no') in response.data)
         ac_edit = Accounts.query.get(1)
