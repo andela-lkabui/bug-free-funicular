@@ -220,7 +220,7 @@ class AccountDetailResource(Resource):
                         return {}, 204
                     return {
                             'message': 'Access to account is restricted to owner'
-                        }, 401
+                        }, 403
                 return {'message': 'Account does not exist'}, 404
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
