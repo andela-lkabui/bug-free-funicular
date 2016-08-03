@@ -17,6 +17,7 @@ manager.add_command('db', MigrateCommand)
 
 class Outlets(db.Model):
     """ORM for shopping outlets that sell goods and/or services."""
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     postal_address = db.Column(db.String(100))
@@ -66,6 +67,7 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=False)
     purchases = db.relationship(
         'GoodsPurchased', backref='user', lazy='dynamic')
+    accounts = db.relationship('Accounts', backref='user', lazy='dynamic')
 
     def __repr__(self):
         """Defines custom representation for User model instances."""
@@ -137,6 +139,22 @@ class GoodsPurchased(db.Model):
     def __repr__(self):
         """Defines custom representation for GoodsPurchased model instances."""
         return '<GoodsPurchased {0}>'.format(self.price)
+
+
+class Accounts(db.Model):
+    """ORM for monetary Accounts."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    phone_no = db.Column(db.String(25), nullable=False)
+    account_no = db.Column(db.String(20), nullable=False)
+    account_provider = db.Column(db.String(150), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+
+    def __repr__(self):
+        """Defines custom representation for Accounts model instances."""
+        return '<Accounts {0}>'.format(self.name)
+
 
 if __name__ == '__main__':
     manager.run()

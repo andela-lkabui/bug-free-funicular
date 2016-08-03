@@ -1,10 +1,11 @@
 import json
 
+from flask import request
 from flask_restful import Resource, Api, reqparse
 
 from app import app, db
-from models import User
-from serializer import ServicesSchema
+from models import User, Accounts
+from serializer import ServicesSchema, AccountsSchema
 
 api = Api(app)
 
@@ -26,7 +27,7 @@ class UserResource(Resource):
 
         if values.get('username'):
             if values.get('password'):
-                # check if a user by provided username already exists
+                # check if a user by provided username already s
                 exists = User.query.filter_by(username=values.get('username')).first()
                 if exists:
                     return json.dumps({'message': 'User already exists'}), 400
@@ -81,7 +82,7 @@ class LoginResource(Resource):
                         user.is_active = True
                         db.session.add(user)
                         db.session.commit()
-                        return json.dumps({'token': decoded}), 200
+                        return {'token': decoded}, 200
                     return json.dumps({'message': 'Incorrect password'}), 400
                 return json.dumps(
                         {'message': 'Password is required'}
@@ -90,12 +91,139 @@ class LoginResource(Resource):
         return json.dumps({'message': 'Username is required'}), 400
 
 
-class AccountResource(Resource):
-    """
-    Class encapsulates restful implementation of the Accounts resource.
-    """
-    pass
+class AccountListResource(Resource):
 
+    def __init__(self):
+        """
+        Instantiates class instance variables upon object instance creation.
+        """
+        self.accounts_schema = AccountsSchema()
+
+    def get(self):
+        """
+        List all accounts belonging to the currently logged in user.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                all_accounts = Accounts.query.filter_by(
+                    user_id=current_user.user_id
+                )
+                result = self.accounts_schema.dumps(all_accounts, many=True)
+                result_dict = json.loads(result.data)
+                return result_dict, 200
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
+
+    def post(self):
+        """
+        Create a new Account where the owner will be the currently logged in
+        user.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('phone_no')
+                parser.add_argument('account_no')
+                parser.add_argument('account_provider')
+                values = parser.parse_args()
+                if None not in values.values() and '' not in values.values():
+                    account = Accounts(**values)
+                    account.user_id = current_user.user_id
+                    db.session.add(account)
+                    db.session.commit()
+                    return {'message': 'Account created'}, 201
+                return {
+                        'message': 'Account name, phone no, account no\
+                        and account provider are all required'
+                        }, 400
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
+
+
+class AccountDetailResource(Resource):
+    """
+    Class encapsulates restful implementation of the Accounts detail routes.
+    """
+
+    def __init__(self):
+        """
+        Instantiates class instance variables upon object instance creation.
+        """
+        self.accounts_schema = AccountsSchema()
+
+    def get(self, account_id):
+        """
+        Returns details of Account whose id is `account_id`.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                ac = Accounts.query.get(account_id)
+                if ac:
+                    if ac.user_id == current_user.user_id:
+                        result = self.accounts_schema.dumps(ac)
+                        result_dict = json.loads(result.data)
+                        return result_dict, 200
+                    return {
+                            'message': 'Access to account is restricted to owner'
+                        }, 403
+                return {'message': 'Account does not exist'}, 404
+            return {'message': 'Invalid token'}, 400
+        return {'message': 'Unauthenticated request'}, 401
+
+    def put(self, account_id):
+        """
+        Updates account of id `account_id` with user provided data.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                ac = Accounts.query.get(account_id)
+                if ac:
+                    if ac.user_id == current_user.user_id:
+                        if 'phone_no' in request.form and 'name' in request.form:
+                            ac.phone_no = request.form.get('phone_no')
+                            ac.name = request.form.get('name')
+                            db.session.add(ac)
+                            db.session.commit()
+                            result = self.accounts_schema.dumps(ac)
+                            result_dict = json.loads(result.data)
+                            return result_dict, 200
+                        return {'message': 'Missing parameter data'}, 400
+                    return {
+                            'message': 'Access to account is restricted to owner'
+                        }, 403
+                return {'message': 'Account does not exist'}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
+
+    def delete(self, account_id):
+        """
+        Deletes Account of id `account_id`.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                ac = Accounts.query.get(account_id)
+                if ac:
+                    if ac.user_id == current_user.user_id:
+                        db.session.delete(ac)
+                        db.session.commit()
+                        return {}, 204
+                    return {
+                            'message': 'Access to account is restricted to owner'
+                        }, 403
+                return {'message': 'Account does not exist'}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
 class ServicesResource(Resource):
     """

@@ -1,0 +1,31 @@
+[
+    {
+        "model": "models.Accounts",
+        "records": [
+            {
+                "id": 1,
+                "name": "Anthony Other",
+                "phone_no": "8934769319076389",
+                "account_no": "8734-34477617678",
+                "account_provider": "Anthony National Bank",
+                "user_id": 1
+            },
+            {
+                "id": 2,
+                "name": "Anthony Other",
+                "phone_no": "348898954876",
+                "account_no": "8733124-956887889329",
+                "account_provider": "David National Bank",
+                "user_id": 1
+            },
+            {
+                "id": 3,
+                "name": "Eric Puma",
+                "phone_no": "935687782309476",
+                "account_no": "8734-8738452987624173",
+                "account_provider": "Eric National Bank",
+                "user_id": 2
+            }
+        ]
+    }
+]
