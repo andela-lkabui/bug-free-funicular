@@ -335,6 +335,115 @@ class TestAccount(TestBase):
         ac_edit = Accounts.query.get(1)
         self.assertNotEqual(ac_name, ac_edit.name)
 
+    def test_account_resource_edit_functionality_missing_name(self):
+        """
+        Test edit functionality for the account resource when the user doesn't
+        specify a value for the name parameter.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        data = {
+            'phone_no': self.fake.phone_number(),
+        }
+        response = self.client.put('/accounts/1/', headers=headers, data=data)
+        self.assertEqual(response.status, '400 BAD REQUEST')
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue('Missing parameter data' in response.data)
+
+    def test_account_resource_edit_functionality_not_owner(self):
+        """
+        Test edit functionality for the account resource when the user trying to
+        send the edit request is not the owner of the account being edited.
+        """
+        user = {
+            'username': 'ruby',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        data = {
+            'name': self.fake.name(),
+            'phone_no': self.fake.phone_number(),
+        }
+        response = self.client.put('/accounts/1/', headers=headers, data=data)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue('Access to account is restricted to owner' in response.data)
+
+    def test_account_resource_edit_functionality_account_doesnt_exist(self):
+        """
+        Test edit functionality for the account resource when the user requests
+        to edit an account which doesn't exist in the database.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        data = {
+            'name': self.fake.name(),
+            'phone_no': self.fake.phone_number(),
+        }
+        # account of id 4 doesn't exist (no fixture where id=4)
+        response = self.client.put('/accounts/4/', headers=headers, data=data)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue('Account does not exist' in response.data)
+
+    def test_account_resource_edit_functionality_invalid_auth_token(self):
+        """
+        Test edit functionality for the account resource when the user sends
+        an edit request with an invalid authentication token.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        data = {
+            'name': self.fake.name(),
+            'phone_no': self.fake.phone_number(),
+        }
+        response = self.client.put('/accounts/1/', headers=headers, data=data)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue('Invalid token' in response.data)
+
+    def test_account_resource_edit_functionality_without_auth_token(self):
+        """
+        Test edit functionality for the account resource when the user sends
+        an edit request without an authentication token.
+
+        The auth token is not provided in the username header.
+        """
+        data = {
+            'phone_no': self.fake.phone_number(),
+            'name': self.fake.name()
+        }
+        response = self.client.put('/accounts/1/', data=data)
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue('Unauthenticated request' in response.data)
+
     def test_account_resource_delete_functionality(self):
         """
         Test delete functionality for the account resource.
