@@ -196,13 +196,13 @@ class AccountDetailResource(Resource):
                             result = self.accounts_schema.dumps(ac)
                             result_dict = json.loads(result.data)
                             return result_dict, 200
-                        return {'message': 'Missing data'}, 400
+                        return {'message': 'Missing parameter data'}, 400
                     return {
                             'message': 'Access to account is restricted to owner'
-                        }, 401
+                        }, 403
                 return {'message': 'Account does not exist'}, 404
             return {'message': 'Invalid token'}, 403
-        return {'message': 'Unauthenticated request'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def delete(self, account_id):
         """
