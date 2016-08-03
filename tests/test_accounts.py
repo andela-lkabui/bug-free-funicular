@@ -476,7 +476,8 @@ class TestAccount(TestBase):
 
     def test_account_resource_delete_functionality_not_account_owner(self):
         """
-        Test delete functionality for the account resource.
+        Test delete functionality for the account resource when user sending the
+        request to delete an account is not the account owner.
         """
         user = {
             'username': 'ruby',
@@ -499,7 +500,8 @@ class TestAccount(TestBase):
 
     def test_account_resource_delete_functionality_account_doesnt_exist(self):
         """
-        Test delete functionality for the account resource.
+        Test delete functionality for the account resource when the user requests
+        to delete an account that doesn't exist in the database.
         """
         user = {
             'username': 'pythonista',
@@ -523,7 +525,8 @@ class TestAccount(TestBase):
 
     def test_account_resource_delete_functionality_invalid_auth_token(self):
         """
-        Test delete functionality for the account resource.
+        Test delete functionality for the account resource when the request is
+        sent with an invalid token.
         """
         token = self.fake.sha256()
         headers = {
@@ -536,7 +539,8 @@ class TestAccount(TestBase):
 
     def test_account_resource_delete_functionality_without_auth_token(self):
         """
-        Test delete functionality for the account resource.
+        Test delete functionality for the account resource when the request is
+        sent without an authentication token.
         """
         response = self.client.delete('/accounts/1/')
         self.assertEqual(response.status, '401 UNAUTHORIZED')
