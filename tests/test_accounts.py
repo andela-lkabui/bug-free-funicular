@@ -359,7 +359,7 @@ class TestAccount(TestBase):
         self.assertEqual(response.status_code, 400)
         self.assertTrue('Missing parameter data' in response.data)
 
-    def test_account_resource_edit_functionality_not_owner(self):
+    def test_account_resource_edit_functionality_not_account_owner(self):
         """
         Test edit functionality for the account resource when the user trying to
         send the edit request is not the owner of the account being edited.
@@ -467,3 +467,72 @@ class TestAccount(TestBase):
         response = self.client.get('/accounts/1/', headers=headers)
         self.assertEqual(response.status, '404 NOT FOUND')
         self.assertEqual(response.status_code, 404)
+
+    def test_account_resource_delete_functionality_not_account_owner(self):
+        """
+        Test delete functionality for the account resource.
+        """
+        user = {
+            'username': 'ruby',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/accounts/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            'Access to account is restricted to owner' in response.data)
+        ac = Accounts.query.get(1)
+        self.assertTrue(ac)
+
+    def test_account_resource_delete_functionality_account_doesnt_exist(self):
+        """
+        Test delete functionality for the account resource.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        # account of id 4 doesn't exist in account fixtures
+        response = self.client.delete('/accounts/4/', headers=headers)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue('Account does not exist' in response.data)
+        # Confirm account of id 4 doesn't exist in the database
+        ac = Accounts.query.get(4)
+        self.assertFalse(ac)
+
+    def test_account_resource_delete_functionality_invalid_auth_token(self):
+        """
+        Test delete functionality for the account resource.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/accounts/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue('Invalid token' in response.data)
+
+    def test_account_resource_delete_functionality_without_auth_token(self):
+        """
+        Test delete functionality for the account resource.
+        """
+        response = self.client.delete('/accounts/1/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue('Unauthenticated request' in response.data)
