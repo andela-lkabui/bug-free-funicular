@@ -146,14 +146,14 @@ class Accounts(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
-    phone_no = db.Column(db.String(15), nullable=False)
+    phone_no = db.Column(db.String(25), nullable=False)
     account_no = db.Column(db.String(20), nullable=False)
     account_provider = db.Column(db.String(150), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
 
     def __repr__(self):
         """Defines custom representation for Accounts model instances."""
-        return '<Accounts {0}>'.format(self.name) 
+        return '<Accounts {0}>'.format(self.name)
 
 
 if __name__ == '__main__':
