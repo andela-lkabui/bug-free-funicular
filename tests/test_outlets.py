@@ -24,8 +24,8 @@ class TestOutlet(TestBase):
         token = json_data.get('token')
         # create the outlet
         data = {
-            'outlet_name': self.fake.name(),
-            'po_box': self.fake.street_address(),
+            'name': self.fake.name(),
+            'postal_address': self.fake.street_address(),
             'location': self.fake.city()
         }
         headers = {
@@ -36,5 +36,5 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status_code, 201)
         # fetch outlet from DB and confirm logged in user is owner
         outlet = Outlets.query.filter_by(
-            name=data.get('outlet_name')).first()
+            name=data.get('name')).first()
         self.assertEqual(outlet.user.username, user.get('username'))
