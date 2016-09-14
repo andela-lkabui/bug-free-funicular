@@ -225,6 +225,7 @@ class AccountDetailResource(Resource):
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
 
+
 class ServicesResource(Resource):
     """
     Class encapsulates restful implementation of the Services resource.
@@ -368,18 +369,27 @@ class OutletsListResource(Resource):
         """
         Create new outlet where creator will be the currently logged in user.
         """
-        # specify data fields to look out for from user
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('postal_address')
-        values = parser.parse_args()
-        # create outlet object from data
-        new_outlet = Outlets(**values)
-        db.session.add(new_outlet)
-        db.session.commit()
-        # display details of object just created
-        json_result = self.outlet_schema.dumps(new_outlet)
-        return json_result.data, 201
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('postal_address')
+                parser.add_argument('location')
+                values = parser.parse_args()
+                if None not in values.values() and '' not in values.values():
+                    new_outlet = Outlets(**values)
+                    new_outlet.user_id = current_user.user_id
+                    db.session.add(new_outlet)
+                    db.session.commit()
+                    return {'message': 'Outlet created'}, 201
+                return {
+                        'message': 'Name, postal address and location are' +
+                        ' all required'
+                        }, 400
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
 
 class OutletsDetailResource(Resource):
