@@ -4,8 +4,8 @@ from flask import request
 from flask_restful import Resource, Api, reqparse
 
 from app import app, db
-from models import User, Accounts
-from serializer import ServicesSchema, AccountsSchema
+from models import User, Accounts, Outlets
+from serializer import ServicesSchema, AccountsSchema, OutletSchema
 
 api = Api(app)
 
@@ -361,7 +361,7 @@ class OutletsListResource(Resource):
         List all outlets created by currently logged in user.
         """
         all_outlets = Outlets.query.all()
-        json_result = outlet_schema.dumps(all_outlets, many=True)
+        json_result = self.outlet_schema.dumps(all_outlets, many=True)
         return json_result.data, 200
 
     def post(self):
@@ -378,7 +378,7 @@ class OutletsListResource(Resource):
         db.session.add(new_outlet)
         db.session.commit()
         # display details of object just created
-        json_result = outlet_schema.dumps(new_outlet)
+        json_result = self.outlet_schema.dumps(new_outlet)
         return json_result.data, 201
 
 
@@ -398,7 +398,7 @@ class OutletsDetailResource(Resource):
         Returns details of Outlet whose id is `outlet_id`.
         """
         one_outlet = Outlets.query.get(outlet_id)
-        json_result = outlet_schema.dumps(one_outlet)
+        json_result = self.outlet_schema.dumps(one_outlet)
         return json_result.data, 200
 
     def put(self, outlet_id):
@@ -422,7 +422,7 @@ class OutletsDetailResource(Resource):
                 edit_outlet.postal_address = values.get('postal_address')
             db.session.add(edit_outlet)
             db.session.commit()
-            json_result = outlet_schema.dumps(edit_outlet)
+            json_result = self.outlet_schema.dumps(edit_outlet)
             return json_result.data, 200
         return json.dumps(not_found), 400
 

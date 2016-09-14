@@ -1,6 +1,7 @@
 import json
 
 from test_base import TestBase
+from models import Outlets
 
 
 class TestOutlet(TestBase):
