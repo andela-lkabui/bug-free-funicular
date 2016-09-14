@@ -345,21 +345,29 @@ class GoodsResource(Resource):
         return json.dumps(not_found), 400
 
 
-class OutletsResource(Resource):
+class OutletsListResource(Resource):
     """
-    Class encapsulates restful implementation of the Outlets resource.
+    Class encapsulates restful implementation of the Outlets list route.
     """
 
     def __init__(self):
+        """
+        Instantiates class instance variables upon object instance creation.
+        """
         self.outlet_schema = OutletSchema()
 
     def get(self):
-        # list view
+        """
+        List all outlets created by currently logged in user.
+        """
         all_outlets = Outlets.query.all()
         json_result = outlet_schema.dumps(all_outlets, many=True)
         return json_result.data, 200
 
     def post(self):
+        """
+        Create new outlet where creator will be the currently logged in user.
+        """
         # specify data fields to look out for from user
         parser = reqparse.RequestParser()
         parser.add_argument('name')
@@ -373,12 +381,31 @@ class OutletsResource(Resource):
         json_result = outlet_schema.dumps(new_outlet)
         return json_result.data, 201
 
+
+class OutletsDetailView(Resource):
+    """
+    Class encapsulates restful implementation of the Outlets detail route.
+    """
+
+    def __init__():
+        """
+        Instantiates class instance variables upon object instance creation.
+        """
+        self.outlet_schema = OutletSchema()
+
     def get(self, outlet_id):
+        """
+        Returns details of Outlet whose id is `outlet_id`.
+        """
         one_outlet = Outlets.query.get(outlet_id)
         json_result = outlet_schema.dumps(one_outlet)
         return json_result.data, 200
 
     def put(self, outlet_id):
+        """
+        Updates `name` and/or `postal_address` of Outlet whose id is
+        `outlet_id`.
+        """
         # get the update data from the client
         parser = reqparse.RequestParser()
         parser.add_argument('name')
@@ -400,6 +427,9 @@ class OutletsResource(Resource):
         return json.dumps(not_found), 400
 
     def delete(self, outlet_id):
+        """
+        Deletes Outlet whose id is `outlet_id`.
+        """
         del_outlet = Outlets.query.get(outlet_id)
         if del_outlet:
             db.session.delete(del_outlet)
