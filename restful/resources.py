@@ -382,7 +382,7 @@ class OutletsListResource(Resource):
         return json_result.data, 201
 
 
-class OutletsDetailView(Resource):
+class OutletsDetailResource(Resource):
     """
     Class encapsulates restful implementation of the Outlets detail route.
     """
