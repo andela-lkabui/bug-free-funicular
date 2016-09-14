@@ -30,7 +30,7 @@ class TestOutlet(TestBase):
         headers = {
             'username': token
         }
-        response = self.client.post('/outlet/', data=data, headers=headers)
+        response = self.client.post('/outlets/', data=data, headers=headers)
         self.assertEqual(response.status, '201 CREATED')
         self.assertEqual(response.status_code, 201)
         # fetch outlet from DB and confirm logged in user is owner
