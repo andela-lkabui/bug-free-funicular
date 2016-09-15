@@ -9,7 +9,7 @@ class TestOutlet(TestBase):
 
     fixtures = ['user.json']
 
-    def test_successful_outlet_creation(self):
+    def test_outlet_resource_successful_creation(self):
         """
         Tests successful creation of a outlet.
         """
@@ -39,7 +39,7 @@ class TestOutlet(TestBase):
             name=data.get('name')).first()
         self.assertEqual(outlet.user.username, user.get('username'))
 
-    def test_outlet_creation_without_authentication(self):
+    def test_outlet_resource_creation_without_authentication(self):
         """
         Test attempt to create Outlet when request is not authenticated.
         """
@@ -57,7 +57,7 @@ class TestOutlet(TestBase):
             name=data.get('name')).first()
         self.assertFalse(outlet)
 
-    def test_outlet_creation_without_name(self):
+    def test_outlet_resource_creation_without_name(self):
         """
         Test attempt to create Outlet without `name` parameter.
         """
@@ -93,7 +93,7 @@ class TestOutlet(TestBase):
             name=data.get('postal_address')).first()
         self.assertFalse(outlet)
 
-    def test_outlet_creation_without_postal_address(self):
+    def test_outlet_resource_creation_without_postal_address(self):
         """
         Test attempt to create Outlet without `postal_address` parameter.
         """
@@ -129,7 +129,7 @@ class TestOutlet(TestBase):
             name=data.get('name')).first()
         self.assertFalse(outlet)
 
-    def test_outlet_creation_without_location(self):
+    def test_outlet_resource_creation_without_location(self):
         """
         Test attempt to create Outlet without `location` parameter.
         """
@@ -165,15 +165,11 @@ class TestOutlet(TestBase):
             name=data.get('name')).first()
         self.assertFalse(outlet)
 
-    def test_outlet_creation_with_invalid_token(self):
+    def test_outlet_resource_creation_with_invalid_token(self):
         """
         Tests attempt to create an Outlet with an invalid token.
         """
         # login using credentials of the fixtures user
-        user = {
-            'username': 'pythonista',
-            'password': 'pythonista'
-        }
         token = self.fake.sha256()
         # create the outlet
         data = {
@@ -191,3 +187,83 @@ class TestOutlet(TestBase):
         outlet = Outlets.query.filter_by(
             name=data.get('name')).first()
         self.assertFalse(outlet)
+
+    def test_outlet_resource_get_list_functionality(self):
+        """
+        Test the correct get functionality in the list view of Outlet resource.
+
+        Expect permissions between different users to be taken into account.
+        """
+        # login first user
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        # create outlet with first user
+        data = {
+            'name': self.fake.name(),
+            'postal_address': self.fake.street_address(),
+            'location': self.fake.city()
+        }
+        response = self.client.post('/outlets/', data=data, headers=headers) 
+        self.assertEqual(response.status, '201 CREATED')
+        # login second user
+        user2 = {
+            'username': 'ruby',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user2)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token2 = json_data.get('token')
+        headers2 = {
+            'username': token2
+        }
+        # create another outlet with second user
+        data2 = {
+            'name': self.fake.name(),
+            'postal_address': self.fake.street_address(),
+            'location': self.fake.city()
+        }
+        response = self.client.post('/outlets/', data=data2, headers=headers2)
+        self.assertEqual(response.status, '201 CREATED')
+        # first user can only access outlet they created
+        response = self.client.get('/outlets/', headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertTrue(data.get('name') in response.data)
+        self.assertTrue(data2.get('name') not in response.data)
+        # second user can only access outlet they created
+        # first user can only access outlet they created
+        response = self.client.get('/outlets/', headers=headers2)
+        self.assertEqual(response.status, '200 OK')
+        self.assertTrue(data.get('name') not in response.data)
+        self.assertTrue(data2.get('name') in response.data)
+
+    def test_outlet_resource_get_list_functionality_no_authentication(self):
+        """
+        Test Outlet get list functionality when request is not authenticated.
+        """
+        response = self.client.get('/outlets/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue('Unauthenticated request' in response.data)
+
+    def test_outlet_resource_get_list_functionality_invalid_token(self):
+        """
+        Test Outlet get list functionality when request is not authenticated.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/outlets/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue('Invalid token' in response.data)
