@@ -361,9 +361,15 @@ class OutletsListResource(Resource):
         """
         List all outlets created by currently logged in user.
         """
-        all_outlets = Outlets.query.all()
-        json_result = self.outlet_schema.dumps(all_outlets, many=True)
-        return json_result.data, 200
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                all_outlets = Outlets.query.filter_by(user=current_user)
+                json_result = self.outlet_schema.dumps(all_outlets, many=True)
+                return json_result.data, 200
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def post(self):
         """
