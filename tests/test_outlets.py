@@ -339,3 +339,144 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status, '401 UNAUTHORIZED')
         self.assertEqual(response.status_code, 401)
         self.assertTrue('Unauthenticated request' in response.data)
+
+    def test_outlet_resource_put_successful(self):
+        """
+        Test successful attempt to edit an outlet with new data.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        outlet = self.create_outlet()
+        data = {
+            'name': self.fake.name(),
+            'postal_address': self.fake.street_address()
+        }
+        response = self.client.put('/outlets/1/', data=data, headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(data.get('name') in response.data)
+        self.assertTrue(data.get('postal_address') in response.data)
+        self.assertFalse(outlet.name in response.data)
+        self.assertFalse(outlet.postal_address in response.data)
+
+    def test_outlet_resource_put_without_name_parameter(self):
+        """
+        Test the success of a get detail request at Outlet resource without
+        providing the `name` parameter.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        outlet = self.create_outlet()
+        data = {
+            'postal_address': self.fake.street_address()
+        }
+        response = self.client.put('/outlets/1/', data=data, headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(data.get('postal_address') in response.data)
+        self.assertTrue(outlet.name in response.data)
+        self.assertFalse(outlet.postal_address in response.data)
+
+    def test_outlet_resource_put_without_postal_address_parameter(self):
+        """
+        Test the success of a get detail request at Outlet resource without
+        providing the `postal_address` parameter.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        outlet = self.create_outlet()
+        data = {
+            'name': self.fake.name()
+        }
+        response = self.client.put('/outlets/1/', data=data, headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(data.get('name') in response.data)
+        self.assertFalse(outlet.name in response.data)
+        self.assertTrue(outlet.postal_address in response.data)
+
+    def test_outlet_resource_put_without_authentication_token(self):
+        """
+        Test attempt to a get detail request on Outlets resource without an
+        authentication token.
+        """
+        outlet = self.create_outlet()
+        data = {
+            'name': self.fake.name(),
+            'postal_address': self.fake.street_address()
+        }
+        response = self.client.put('/outlets/1/', data=data)
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue('Unauthenticated request' in response.data)
+
+    def test_outlet_resource_put_with_invalid_authentication_token(self):
+        """
+        Test attempt to get detail request in an Outlet resource using an
+        invalid authentication token.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        outlet = self.create_outlet()
+        data = {
+            'name': self.fake.name(),
+            'postal_address': self.fake.street_address()
+        }
+        response = self.client.put('/outlets/1/', data=data, headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue('Invalid token' in response.data)
+
+    def test_outlet_resource_put_non_existent_outlet_id(self):
+        """
+        Test attempt to get detail request of an Outlet when the outlet_id
+        specified doesn't exist.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        data = {
+            'name': self.fake.name(),
+            'postal_address': self.fake.street_address()
+        }
+        response = self.client.put('/outlets/1/', data=data, headers=headers)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue('Outlet does not exist' in response.data)
