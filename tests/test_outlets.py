@@ -339,7 +339,7 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status, '401 UNAUTHORIZED')
         self.assertEqual(response.status_code, 401)
         self.assertTrue('Unauthenticated request' in response.data)
-
+   
     def test_outlet_resource_put_successful(self):
         """
         Test successful attempt to edit an outlet with new data.
@@ -356,6 +356,8 @@ class TestOutlet(TestBase):
             'username': token
         }
         outlet = self.create_outlet()
+        name = outlet.name
+        postal_address = outlet.postal_address
         data = {
             'name': self.fake.name(),
             'postal_address': self.fake.street_address()
@@ -365,8 +367,8 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(data.get('name') in response.data)
         self.assertTrue(data.get('postal_address') in response.data)
-        self.assertFalse(outlet.name in response.data)
-        self.assertFalse(outlet.postal_address in response.data)
+        self.assertFalse(name in response.data)
+        self.assertFalse(postal_address in response.data)
 
     def test_outlet_resource_put_without_name_parameter(self):
         """
@@ -385,6 +387,8 @@ class TestOutlet(TestBase):
             'username': token
         }
         outlet = self.create_outlet()
+        name = outlet.name
+        postal_address = outlet.postal_address
         data = {
             'postal_address': self.fake.street_address()
         }
@@ -392,8 +396,8 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(data.get('postal_address') in response.data)
-        self.assertTrue(outlet.name in response.data)
-        self.assertFalse(outlet.postal_address in response.data)
+        self.assertTrue(name in response.data)
+        self.assertFalse(postal_address in response.data)
 
     def test_outlet_resource_put_without_postal_address_parameter(self):
         """
@@ -412,6 +416,8 @@ class TestOutlet(TestBase):
             'username': token
         }
         outlet = self.create_outlet()
+        name = outlet.name
+        postal_address = outlet.postal_address
         data = {
             'name': self.fake.name()
         }
@@ -419,8 +425,8 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(data.get('name') in response.data)
-        self.assertFalse(outlet.name in response.data)
-        self.assertTrue(outlet.postal_address in response.data)
+        self.assertFalse(name in response.data)
+        self.assertTrue(postal_address in response.data)
 
     def test_outlet_resource_put_without_authentication_token(self):
         """
