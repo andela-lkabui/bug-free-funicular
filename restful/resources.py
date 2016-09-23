@@ -418,8 +418,11 @@ class OutletsDetailResource(Resource):
             current_user = User.verify_auth_token(token)
             if current_user:
                 one_outlet = Outlets.query.get(outlet_id)
-                json_result = self.outlet_schema.dumps(one_outlet)
-                return json_result.data, 200
+                if one_outlet:
+                    json_result = self.outlet_schema.dumps(one_outlet)
+                    return json_result.data, 200
+                return {'message': 'Outlet does not exist'}, 404
+                return
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
 
@@ -445,7 +448,8 @@ class OutletsDetailResource(Resource):
                     if values.get('name'):
                         edit_outlet.name = values.get('name')
                     if values.get('postal_address'):
-                        edit_outlet.postal_address = values.get('postal_address')
+                        edit_outlet.postal_address = values.get(
+                            'postal_address')
                     db.session.add(edit_outlet)
                     db.session.commit()
                     json_result = self.outlet_schema.dumps(edit_outlet)
