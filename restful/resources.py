@@ -428,25 +428,31 @@ class OutletsDetailResource(Resource):
         Updates `name` and/or `postal_address` of Outlet whose id is
         `outlet_id`.
         """
-        # get the update data from the client
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('postal_address')
-        values = parser.parse_args()
-        # fetch the object from the DB
-        edit_outlet = Outlets.query.get(outlet_id)
-        if edit_outlet:
-            # update object properties only when new values have been provided
-            # by the client
-            if values.get('name'):
-                edit_outlet.name = values.get('name')
-            if values.get('postal_address'):
-                edit_outlet.postal_address = values.get('postal_address')
-            db.session.add(edit_outlet)
-            db.session.commit()
-            json_result = self.outlet_schema.dumps(edit_outlet)
-            return json_result.data, 200
-        return json.dumps(not_found), 400
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                # get the update data from the client
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('postal_address')
+                values = parser.parse_args()
+                # fetch the object from the DB
+                edit_outlet = Outlets.query.get(outlet_id)
+                if edit_outlet:
+                    # update object properties only when new values have been provided
+                    # by the client
+                    if values.get('name'):
+                        edit_outlet.name = values.get('name')
+                    if values.get('postal_address'):
+                        edit_outlet.postal_address = values.get('postal_address')
+                    db.session.add(edit_outlet)
+                    db.session.commit()
+                    json_result = self.outlet_schema.dumps(edit_outlet)
+                    return json_result.data, 200
+                return {'message': 'Outlet does not exist'}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def delete(self, outlet_id):
         """
