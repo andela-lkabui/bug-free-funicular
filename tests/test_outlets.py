@@ -558,3 +558,26 @@ class TestOutlet(TestBase):
         exists = Outlets.query.get(outlet_id)
         self.assertTrue(exists)
         self.assertTrue('Invalid token' in response.data)
+
+    def test_outlet_resource_delete_not_owner(self):
+        """
+        Test attempt to delete a resource when the request to delete is not
+        coming from the owner
+        """
+        user = {
+            'username': 'ruby',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        outlet = self.create_outlet()
+        response = self.client.delete('/outlets/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        outlet = Outlets.query.get(1)
+        self.assertTrue(outlet)

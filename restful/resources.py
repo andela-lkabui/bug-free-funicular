@@ -468,9 +468,13 @@ class OutletsDetailResource(Resource):
             if current_user:
                 del_outlet = Outlets.query.get(outlet_id)
                 if del_outlet:
-                    db.session.delete(del_outlet)
-                    db.session.commit()
-                    return '', 204
-                return json.dumps(not_found), 400
+                    if current_user.user_id == del_outlet.user_id:
+                        db.session.delete(del_outlet)
+                        db.session.commit()
+                        return '', 204
+                    return {
+                            'message': 'Delete operation restricted to user'
+                            }, 403
+                return {'message': 'Outlet does not exist'}, 404
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
