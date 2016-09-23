@@ -458,9 +458,15 @@ class OutletsDetailResource(Resource):
         """
         Deletes Outlet whose id is `outlet_id`.
         """
-        del_outlet = Outlets.query.get(outlet_id)
-        if del_outlet:
-            db.session.delete(del_outlet)
-            db.session.commit()
-            return '', 204
-        return json.dumps(not_found), 400
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                del_outlet = Outlets.query.get(outlet_id)
+                if del_outlet:
+                    db.session.delete(del_outlet)
+                    db.session.commit()
+                    return '', 204
+                return json.dumps(not_found), 400
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
