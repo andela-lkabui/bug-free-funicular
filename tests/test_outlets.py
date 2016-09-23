@@ -2,12 +2,29 @@ import json
 
 from test_base import TestBase
 from models import Outlets
+from restful.resources import db
 
 
 class TestOutlet(TestBase):
     """Test CRUD operations on Outlet resource."""
 
     fixtures = ['user.json']
+
+    def create_outlet(self):
+        """
+        Please, remove this quick fix future Lewis!
+        You can do better than this
+        """
+        name = self.fake.name()
+        outlet = Outlets(
+            name=name,
+            postal_address=self.fake.street_address(),
+            location=self.fake.street_name())
+        outlet.user_id = 1
+        db.session.add(outlet)
+        db.session.commit()
+        return outlet
+        # -----------------------------
 
     def test_outlet_resource_successful_creation(self):
         """
@@ -267,3 +284,58 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status, '403 FORBIDDEN')
         self.assertEqual(response.status_code, 403)
         self.assertTrue('Invalid token' in response.data)
+
+    def test_outlet_resource_get_detail_functionality_no_authentication(self):
+        """
+        Test Outlet resource get detail functionality when request is not
+        authenticated.
+        """
+        response = self.client.get('/outlets/1/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        response = self.client.get('/outlets/3/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+
+    def test_outlet_resource_get_detail_functionality_invalid_token(self):
+        """
+        Test Outlet resource get detail functionality when invalid
+        authentication token is used.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/outlets/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+
+    def test_outlet_resource_get_detail_functionality_successful(self):
+        """
+        Test successful request of get detail functionality in Outlets resource.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        name = self.create_outlet().name
+        response = self.client.get('/outlets/1/', headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(name in response.data)
+
+    def test_outlet_resource_get_detail_no_authentication(self):
+        """
+        Test attempt to send a get detail request to the outlet resource without
+        authentication token.
+        """
+        self.create_outlet()
+        response = self.client.get('/outlets/1/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue('Unauthenticated request' in response.data)
