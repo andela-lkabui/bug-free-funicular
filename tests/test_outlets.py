@@ -505,3 +505,56 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status, '404 NOT FOUND')
         self.assertEqual(response.status_code, 404)
         self.assertTrue('Outlet does not exist' in response.data)
+
+    def test_outlet_resource_delete_successful(self):
+        """
+        Test for the successful delete of an Outlet.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        outlet = self.create_outlet()
+        response = self.client.delete('/outlets/1/', headers=headers)
+        self.assertEqual(response.status, '204 NO CONTENT')
+        self.assertEqual(response.status_code, 204)
+        outlet = Outlets.query.get(1)
+        self.assertFalse(outlet)
+
+    def test_outlet_resource_delete_no_authentication(self):
+        """
+        Test attempt to delete an Outlet when authentication token is not
+        provided.
+        """
+        outlet = self.create_outlet()
+        outlet_id = outlet.id
+        response = self.client.delete('/outlets/1/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        exists = Outlets.query.get(outlet_id)
+        self.assertTrue(exists)
+
+    def test_outlet_resource_delete_invalid_token(self):
+        """
+        Test attempt to delete an Outlet when an invalid token has been
+        provided.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        outlet = self.create_outlet()
+        outlet_id = outlet.id
+        response = self.client.delete('/outlets/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        exists = Outlets.query.get(outlet_id)
+        self.assertTrue(exists)
+        self.assertTrue('Invalid token' in response.data)
