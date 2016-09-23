@@ -339,7 +339,26 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status, '401 UNAUTHORIZED')
         self.assertEqual(response.status_code, 401)
         self.assertTrue('Unauthenticated request' in response.data)
-   
+
+    def test_outlet_resource_get_detail_non_existent_outlet_id(self):
+        """
+        Test attempt to get detail view of Outlet when outlet_id doesn't exist.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/outlets/1/', headers=headers)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
+        
     def test_outlet_resource_put_successful(self):
         """
         Test successful attempt to edit an outlet with new data.
