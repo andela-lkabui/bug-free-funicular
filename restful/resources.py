@@ -403,7 +403,7 @@ class OutletsDetailResource(Resource):
     Class encapsulates restful implementation of the Outlets detail route.
     """
 
-    def __init__():
+    def __init__(self):
         """
         Instantiates class instance variables upon object instance creation.
         """
@@ -413,9 +413,15 @@ class OutletsDetailResource(Resource):
         """
         Returns details of Outlet whose id is `outlet_id`.
         """
-        one_outlet = Outlets.query.get(outlet_id)
-        json_result = self.outlet_schema.dumps(one_outlet)
-        return json_result.data, 200
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                one_outlet = Outlets.query.get(outlet_id)
+                json_result = self.outlet_schema.dumps(one_outlet)
+                return json_result.data, 200
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def put(self, outlet_id):
         """
