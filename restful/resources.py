@@ -419,8 +419,12 @@ class OutletsDetailResource(Resource):
             if current_user:
                 one_outlet = Outlets.query.get(outlet_id)
                 if one_outlet:
-                    json_result = self.outlet_schema.dumps(one_outlet)
-                    return json_result.data, 200
+                    if one_outlet.user_id == current_user.user_id:
+                        json_result = self.outlet_schema.dumps(one_outlet)
+                        return json_result.data, 200
+                    return {
+                            'message': 'Get operation restricted to owner'
+                            }, 403
                 return {'message': 'Outlet does not exist'}, 404
                 return
             return {'message': 'Invalid token'}, 403
@@ -443,17 +447,21 @@ class OutletsDetailResource(Resource):
                 # fetch the object from the DB
                 edit_outlet = Outlets.query.get(outlet_id)
                 if edit_outlet:
-                    # update object properties only when new values have been provided
-                    # by the client
-                    if values.get('name'):
-                        edit_outlet.name = values.get('name')
-                    if values.get('postal_address'):
-                        edit_outlet.postal_address = values.get(
-                            'postal_address')
-                    db.session.add(edit_outlet)
-                    db.session.commit()
-                    json_result = self.outlet_schema.dumps(edit_outlet)
-                    return json_result.data, 200
+                    if edit_outlet.user_id == current_user.user_id:
+                        # update object properties only when new values have been provided
+                        # by the client
+                        if values.get('name'):
+                            edit_outlet.name = values.get('name')
+                        if values.get('postal_address'):
+                            edit_outlet.postal_address = values.get(
+                                'postal_address')
+                        db.session.add(edit_outlet)
+                        db.session.commit()
+                        json_result = self.outlet_schema.dumps(edit_outlet)
+                        return json_result.data, 200
+                    return {
+                            'message': 'Put operation restricted to owner'
+                            }, 403
                 return {'message': 'Outlet does not exist'}, 404
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
@@ -473,7 +481,7 @@ class OutletsDetailResource(Resource):
                         db.session.commit()
                         return '', 204
                     return {
-                            'message': 'Delete operation restricted to user'
+                            'message': 'Delete operation restricted to owner'
                             }, 403
                 return {'message': 'Outlet does not exist'}, 404
             return {'message': 'Invalid token'}, 403

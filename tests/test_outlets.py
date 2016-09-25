@@ -358,6 +358,27 @@ class TestOutlet(TestBase):
         response = self.client.get('/outlets/1/', headers=headers)
         self.assertEqual(response.status, '404 NOT FOUND')
         self.assertEqual(response.status_code, 404)
+
+    def test_outlet_resource_get_detail_not_owner(self):
+        """
+        Test get detail request on Outlet when authenticated user is not the
+        owner.
+        """
+        user = {
+            'username': 'ruby',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        outlet = self.create_outlet()
+        response = self.client.get('/outlets/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
         
     def test_outlet_resource_put_successful(self):
         """
@@ -506,6 +527,34 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status_code, 404)
         self.assertTrue('Outlet does not exist' in response.data)
 
+    def test_outlet_resource_put_not_owner(self):
+        """
+        Test a put request on Outlet resource when the authenticated user is
+        not the owner.
+        """
+        user = {
+            'username': 'ruby',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        outlet = self.create_outlet()
+        data = {
+            'name': self.fake.name(),
+            'postal_address': self.fake.street_address()
+        }
+        response = self.client.put('/outlets/1/', data=data, headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        not_edited = Outlets.query.get(1)
+        self.assertEqual(outlet.name, not_edited.name)
+        self.assertEqual(outlet.postal_address, not_edited.postal_address)
+
     def test_outlet_resource_delete_successful(self):
         """
         Test for the successful delete of an Outlet.
@@ -579,8 +628,8 @@ class TestOutlet(TestBase):
         response = self.client.delete('/outlets/1/', headers=headers)
         self.assertEqual(response.status, '403 FORBIDDEN')
         self.assertEqual(response.status_code, 403)
-        outlet = Outlets.query.get(1)
-        self.assertTrue(outlet)
+        outlet_exists = Outlets.query.get(1)
+        self.assertTrue(outlet_exists)
 
     def test_outlet_resource_delete_non_existent_outlet_id(self):
         """
