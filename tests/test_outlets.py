@@ -581,3 +581,22 @@ class TestOutlet(TestBase):
         self.assertEqual(response.status_code, 403)
         outlet = Outlets.query.get(1)
         self.assertTrue(outlet)
+
+    def test_outlet_resource_delete_non_existent_outlet_id(self):
+        """
+        Test delete on Outlets resource when the outlet_id does not exist.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/outlets/1/', headers=headers)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
