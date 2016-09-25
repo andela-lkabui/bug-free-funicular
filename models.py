@@ -24,11 +24,14 @@ class Outlets(db.Model):
     purchases = db.relationship(
                 'GoodsPurchased', backref=db.backref('outlets', lazy='joined'),
                 lazy='dynamic')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
+    location = db.Column(db.String(100))
 
-    def __init__(self, name, postal_address):
+    def __init__(self, name, postal_address, location):
         """Custom outlets model constructor."""
         self.name = name
         self.postal_address = postal_address
+        self.location = location
 
     def __repr__(self):
         """Defines custom representation for Outlet model instances."""
@@ -68,6 +71,7 @@ class User(db.Model):
     purchases = db.relationship(
         'GoodsPurchased', backref='user', lazy='dynamic')
     accounts = db.relationship('Accounts', backref='user', lazy='dynamic')
+    outlets = db.relationship('Outlets', backref='user', lazy='dynamic')
 
     def __repr__(self):
         """Defines custom representation for User model instances."""

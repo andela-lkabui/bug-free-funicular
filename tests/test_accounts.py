@@ -264,8 +264,8 @@ class TestAccount(TestBase):
 
     def test_accounts_detail_view_authenticated_user_not_owner(self):
         """
-        Test response when Account resource detail view is requested and account
-        of specified id doesn't belong to current user.
+        Test response when Account resource detail view is requested and
+        account of specified id doesn't belong to current user.
         """
         user = {
             'username': 'pythonista',

@@ -4,8 +4,8 @@ from flask import request
 from flask_restful import Resource, Api, reqparse
 
 from app import app, db
-from models import User, Accounts
-from serializer import ServicesSchema, AccountsSchema
+from models import User, Accounts, Outlets
+from serializer import ServicesSchema, AccountsSchema, OutletSchema
 
 api = Api(app)
 
@@ -225,6 +225,7 @@ class AccountDetailResource(Resource):
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
 
+
 class ServicesResource(Resource):
     """
     Class encapsulates restful implementation of the Services resource.
@@ -345,64 +346,143 @@ class GoodsResource(Resource):
         return json.dumps(not_found), 400
 
 
-class OutletsResource(Resource):
+class OutletsListResource(Resource):
     """
-    Class encapsulates restful implementation of the Outlets resource.
+    Class encapsulates restful implementation of the Outlets list route.
     """
 
     def __init__(self):
+        """
+        Instantiates class instance variables upon object instance creation.
+        """
         self.outlet_schema = OutletSchema()
 
     def get(self):
-        # list view
-        all_outlets = Outlets.query.all()
-        json_result = outlet_schema.dumps(all_outlets, many=True)
-        return json_result.data, 200
+        """
+        List all outlets created by currently logged in user.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                all_outlets = Outlets.query.filter_by(user=current_user)
+                json_result = self.outlet_schema.dumps(all_outlets, many=True)
+                return json_result.data, 200
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def post(self):
-        # specify data fields to look out for from user
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('postal_address')
-        values = parser.parse_args()
-        # create outlet object from data
-        new_outlet = Outlets(**values)
-        db.session.add(new_outlet)
-        db.session.commit()
-        # display details of object just created
-        json_result = outlet_schema.dumps(new_outlet)
-        return json_result.data, 201
+        """
+        Create new outlet where creator will be the currently logged in user.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('postal_address')
+                parser.add_argument('location')
+                values = parser.parse_args()
+                if None not in values.values() and '' not in values.values():
+                    new_outlet = Outlets(**values)
+                    new_outlet.user_id = current_user.user_id
+                    db.session.add(new_outlet)
+                    db.session.commit()
+                    return {'message': 'Outlet created'}, 201
+                return {
+                        'message': 'Name, postal address and location are' +
+                        ' all required'
+                        }, 400
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
+
+
+class OutletsDetailResource(Resource):
+    """
+    Class encapsulates restful implementation of the Outlets detail route.
+    """
+
+    def __init__(self):
+        """
+        Instantiates class instance variables upon object instance creation.
+        """
+        self.outlet_schema = OutletSchema()
 
     def get(self, outlet_id):
-        one_outlet = Outlets.query.get(outlet_id)
-        json_result = outlet_schema.dumps(one_outlet)
-        return json_result.data, 200
+        """
+        Returns details of Outlet whose id is `outlet_id`.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                one_outlet = Outlets.query.get(outlet_id)
+                if one_outlet:
+                    if one_outlet.user_id == current_user.user_id:
+                        json_result = self.outlet_schema.dumps(one_outlet)
+                        return json_result.data, 200
+                    return {
+                            'message': 'Get operation restricted to owner'
+                            }, 403
+                return {'message': 'Outlet does not exist'}, 404
+                return
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def put(self, outlet_id):
-        # get the update data from the client
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('postal_address')
-        values = parser.parse_args()
-        # fetch the object from the DB
-        edit_outlet = Outlets.query.get(outlet_id)
-        if edit_outlet:
-            # update object properties only when new values have been provided
-            # by the client
-            if values.get('name'):
-                edit_outlet.name = values.get('name')
-            if values.get('postal_address'):
-                edit_outlet.postal_address = values.get('postal_address')
-            db.session.add(edit_outlet)
-            db.session.commit()
-            json_result = outlet_schema.dumps(edit_outlet)
-            return json_result.data, 200
-        return json.dumps(not_found), 400
+        """
+        Updates `name` and/or `postal_address` of Outlet whose id is
+        `outlet_id`.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                # get the update data from the client
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('postal_address')
+                values = parser.parse_args()
+                # fetch the object from the DB
+                edit_outlet = Outlets.query.get(outlet_id)
+                if edit_outlet:
+                    if edit_outlet.user_id == current_user.user_id:
+                        # update object properties only when new values have been provided
+                        # by the client
+                        if values.get('name'):
+                            edit_outlet.name = values.get('name')
+                        if values.get('postal_address'):
+                            edit_outlet.postal_address = values.get(
+                                'postal_address')
+                        db.session.add(edit_outlet)
+                        db.session.commit()
+                        json_result = self.outlet_schema.dumps(edit_outlet)
+                        return json_result.data, 200
+                    return {
+                            'message': 'Put operation restricted to owner'
+                            }, 403
+                return {'message': 'Outlet does not exist'}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def delete(self, outlet_id):
-        del_outlet = Outlets.query.get(outlet_id)
-        if del_outlet:
-            db.session.delete(del_outlet)
-            db.session.commit()
-            return '', 204
-        return json.dumps(not_found), 400
+        """
+        Deletes Outlet whose id is `outlet_id`.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                del_outlet = Outlets.query.get(outlet_id)
+                if del_outlet:
+                    if current_user.user_id == del_outlet.user_id:
+                        db.session.delete(del_outlet)
+                        db.session.commit()
+                        return '', 204
+                    return {
+                            'message': 'Delete operation restricted to owner'
+                            }, 403
+                return {'message': 'Outlet does not exist'}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
