@@ -7,7 +7,7 @@ from models import Goods
 class TestGoods(TestBase):
     """Test CRUD operations on Goods resource."""
 
-    fixtures = ['user.json']
+    fixtures = ['user.json', 'goods.json']
 
     def test_get_list_goods_resource_successful(self):
         """
@@ -40,6 +40,7 @@ class TestGoods(TestBase):
         response = self.client.get('/goods/')
         self.assertEqual(response.status, '401 UNAUTHORIZED')
         self.assertEqual(response.status_code, 401)
+        self.assertTrue('Unauthenticated request' in response.data)
 
     def test_get_list_goods_resource_not_owner(self):
         """
@@ -60,12 +61,14 @@ class TestGoods(TestBase):
         response = self.client.get('/goods/', headers=headers)
         self.assertEqual(response.status, '200 OK')
         self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.data)
+        self.assertEqual(len(json_response), 1)
         self.assertFalse('Silvio Wolf' in response.data)
         self.assertFalse('true' in response.data)
         self.assertFalse('Mr. Lucas Stracke IV' in response.data)
-        self.assertFalse('false' in response.data)
-        self.assertTrue('Mrs. Kaaren Stokes' in response.data)
-        self.assertTrue('false' in response.data)
+        ruby_good = json_response[0]
+        self.assertEqual('Mrs. Kaaren Stokes', ruby_good.get('name'))
+        self.assertEqual(False, ruby_good.get('necessary'))
 
     def test_get_list_goods_resource_invalid_token(self):
         """
@@ -75,7 +78,7 @@ class TestGoods(TestBase):
         headers = {
             'username': token
         }
-        response = self.get('/goods/', headers=headers)
+        response = self.client.get('/goods/', headers=headers)
         self.assertTrue(response.status, '403 FORBIDDEN')
         self.assertTrue(response.status, 403)
         self.assertTrue('Invalid token' in response.data)
