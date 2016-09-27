@@ -1,0 +1,25 @@
+[
+    {
+        "model": "models.Goods",
+        "records": [
+            {
+                "id": 1,
+                "name": "Silvio Wolf",
+                "necessary": true,
+                "user_id": 1
+            },
+            {
+                "id": 2,
+                "name": "Mr. Lucas Stracke IV",
+                "necessary": false,
+                "user_id": 1
+            },
+            {
+                "id": 3,
+                "name": "Mrs. Kaaren Stokes",
+                "necessary": false,
+                "user_id": 2
+            }
+        ]
+    }
+]

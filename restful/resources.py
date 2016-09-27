@@ -4,8 +4,8 @@ from flask import request
 from flask_restful import Resource, Api, reqparse
 
 from app import app, db
-from models import User, Accounts, Outlets
-from serializer import ServicesSchema, AccountsSchema, OutletSchema
+from models import User, Accounts, Outlets, Goods
+from serializer import ServicesSchema, AccountsSchema, OutletSchema, GoodsSchema
 
 api = Api(app)
 
@@ -284,18 +284,25 @@ class ServicesResource(Resource):
         return json_result.data, 201
 
 
-class GoodsResource(Resource):
+class GoodsListResource(Resource):
     """
-    Class encapsulates restful implementation of the Goods resource.
+    Class encapsulates restful implementation of the Goods list route.
     """
 
     def __init__(self):
         self.goods_schema = GoodsSchema()
 
     def get(self):
-        all_goods = Goods.query.all()
-        json_result = goods_schema.dumps(all_goods, many=True)
-        return json_result.data, 200
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                all_goods = Goods.query.filter_by(user_id=current_user.user_id)
+                json_result = self.goods_schema.dumps(all_goods, many=True)
+                result_dict = json.loads(json_result.data)
+                return result_dict, 200
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def post(self):
         parser = reqparse.RequestParser()
@@ -311,6 +318,11 @@ class GoodsResource(Resource):
         json_result = goods_schema.dumps(result.data)
         return json_result.data, 201
 
+
+class GoodsDetailResource(Resource):
+    """
+    Class encapsulates restful implementation of the Goods detail route.
+    """
     def get(self, good_id):
         get_good = Goods.query.get(good_id)
         json_result = goods_schema.dumps(get_good)
