@@ -43,6 +43,7 @@ class Goods(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     necessary = db.Column(db.Boolean)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     purchases = db.relationship(
         'GoodsPurchased', backref='goods', lazy='dynamic')
 
@@ -72,6 +73,7 @@ class User(db.Model):
         'GoodsPurchased', backref='user', lazy='dynamic')
     accounts = db.relationship('Accounts', backref='user', lazy='dynamic')
     outlets = db.relationship('Outlets', backref='user', lazy='dynamic')
+    goods = db.relationship('Goods', backref='user', lazy='dynamic')
 
     def __repr__(self):
         """Defines custom representation for User model instances."""
