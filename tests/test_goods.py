@@ -233,3 +233,96 @@ class TestGoods(TestBase):
             msg='Expected `price ... required` to be part of the\
                 error message'
         )
+
+    def test_get_detail_goods_resource_successful(self):
+        """
+        Test a successful get detail request on Goods resource.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/goods/1/', headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Silvio Wolf' in response.data)
+        json_response = json.loads(response.data)
+        self.assertEqual(1, json_response.get('id'))
+
+    def test_get_detail_goods_resource_not_owner(self):
+        """
+        Test get detail on Goods resource when authenticated request is not
+        from owner.
+        """
+        user = {
+            'username': 'ruby',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/goods/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            'Access to good is restricted to owner' in response.data)
+        self.assertFalse('Silvio Wolf' in response.data)
+
+    def test_get_detail_goods_resource_no_authentication_token(self):
+        """
+        Test get detail on Goods resource when authentication token is not
+        included in the header.
+        """
+        response = self.client.get('/goods/1/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue(
+            'Unauthenticated request' in response.data)
+        self.assertFalse('Silvio Wolf' in response.data)
+
+    def test_get_detail_goods_resource_invalid_auth_token(self):
+        """
+        Test get detail on Goods resource when authentication token is invalid.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/goods/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            'Invalid token' in response.data)
+        self.assertFalse('Silvio Wolf' in response.data)
+
+    def test_get_detail_goods_resource_non_existent_good_id(self):
+        """
+        Test get detail on Goods resource where a good of id 4 does not exist.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/goods/4/', headers=headers)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue('Good of id 4 does not exist' in response.data)
+
