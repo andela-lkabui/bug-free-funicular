@@ -334,10 +334,27 @@ class GoodsDetailResource(Resource):
     """
     Class encapsulates restful implementation of the Goods detail route.
     """
+
+    def __init__(self):
+        self.goods_schema = GoodsSchema()
+
     def get(self, good_id):
-        get_good = Goods.query.get(good_id)
-        json_result = goods_schema.dumps(get_good)
-        return json_result.data, 200
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                get_good = Goods.query.get(good_id)
+                if get_good:
+                    if get_good.user_id == current_user.user_id:
+                        json_result = self.goods_schema.dumps(get_good)
+                        return json.loads(json_result.data), 200
+                    return {
+                        'message': 'Access to good is restricted to owner'
+                    }, 403
+                feedback = 'Good of id {0} does not exist'.format(good_id)
+                return {'message': feedback}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def put(self, good_id):
         parser = reqparse.RequestParser()
