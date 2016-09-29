@@ -305,18 +305,29 @@ class GoodsListResource(Resource):
         return {'message': 'Unauthenticated request'}, 401
 
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('price')
-        parser.add_argument('necessary')
-        values = parser.parse_args()
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('price')
+                parser.add_argument('necessary')
+                values = parser.parse_args()
 
-        result = goods_schema.load(values)
-        db.session.add(result.data)
-        db.session.commit()
+                if None not in values.values():
+                    result = self.goods_schema.load(values)
+                    db.session.add(result.data)
+                    db.session.commit()
 
-        json_result = goods_schema.dumps(result.data)
-        return json_result.data, 201
+                    json_result = self.goods_schema.dumps(result.data)
+                    return json.loads(json_result.data), 201
+                return {
+                        'message': 'Name, price and necessary fields are' +
+                        ' all required'
+                        }, 400
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
 
 class GoodsDetailResource(Resource):
