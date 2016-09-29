@@ -43,6 +43,7 @@ class Goods(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     necessary = db.Column(db.Boolean)
+    price = db.Column(db.Integer)
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     purchases = db.relationship(
         'GoodsPurchased', backref='goods', lazy='dynamic')
