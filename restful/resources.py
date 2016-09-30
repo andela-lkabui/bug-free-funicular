@@ -394,12 +394,23 @@ class GoodsDetailResource(Resource):
         return {'message': 'Unauthenticated request'}, 401
 
     def delete(self, good_id):
-        del_good = Goods.query.get(good_id)
-        if del_good:
-            db.session.delete(del_good)
-            db.session.commit()
-            return '', 204
-        return json.dumps(not_found), 400
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                del_good = Goods.query.get(good_id)
+                if del_good:
+                    if del_good.user_id == current_user.user_id:
+                        db.session.delete(del_good)
+                        db.session.commit()
+                        return '', 204
+                    return {
+                        'message': 'Access to good is restricted to owner'
+                    }, 403
+                feedback = 'Good of id {0} does not exist'.format(good_id)
+                return {'message': feedback}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
 
 class OutletsListResource(Resource):
