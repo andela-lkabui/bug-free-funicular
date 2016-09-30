@@ -357,25 +357,41 @@ class GoodsDetailResource(Resource):
         return {'message': 'Unauthenticated request'}, 401
 
     def put(self, good_id):
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('price')
-        parser.add_argument('necessary')
-        values = parser.parse_args()
-        # fetch the object from the DB
-        edit_good = Goods.query.get(good_id)
-        if edit_good:
-            if values.get('name'):
-                edit_good.name = values.get('name')
-            if values.get('price'):
-                edit_good.price = values.get('price')
-            if values.get('necessary') == 'True':
-                edit_good.necessary = values.get('necessary')
-            db.session.add(edit_good)
-            db.session.commit()
-            json_result = goods_schema.dumps(edit_good)
-            return json_result.data, 200
-        return json.dumps(not_found), 400
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('price')
+                parser.add_argument('necessary')
+                values = parser.parse_args()
+                # fetch the object from the DB
+                edit_good = Goods.query.get(good_id)
+                if edit_good:
+                    if edit_good.user_id == current_user.user_id:
+                        if values.get('name'):
+                            edit_good.name = values.get('name')
+                        if values.get('price'):
+                            edit_good.price = values.get('price')
+                        if values.get('necessary') in ['True', 'False']:
+                            # QUICK FIX
+                            data_from_json = self.goods_schema.load(values).data
+                            if type(data_from_json) == type({}):
+                                edit_good.necessary = data_from_json.get('necessary')
+                            else:
+                                edit_good.necessary = data_from_json.necessary
+                        db.session.add(edit_good)
+                        db.session.commit()
+                        json_result = self.goods_schema.dumps(edit_good)
+                        return json_result.data, 200
+                    return {
+                        'message': 'Access to good is restricted to owner'
+                    }, 403
+                feedback = 'Good of id {0} does not exist'.format(good_id)
+                return {'message': feedback}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def delete(self, good_id):
         del_good = Goods.query.get(good_id)
