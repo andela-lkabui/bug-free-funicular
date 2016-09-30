@@ -328,7 +328,7 @@ class TestGoods(TestBase):
 
     def test_put_goods_resource_successful(self):
         """
-        Test a successful put resource on the Goods resource.
+        Test a successful put request on the Goods resource.
         """
         user = {
             'username': 'pythonista',
@@ -541,3 +541,98 @@ class TestGoods(TestBase):
         self.assertEqual(edited_good.price, data.get('price'))
         self.assertEqual(edited_good.name, name)
         self.assertEqual(edited_good.necessary, necessary)
+
+    def test_delete_goods_resource_successful(self):
+        """
+        Test a successful delete request on the Goods resource.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/goods/1/', headers=headers)
+        self.assertEqual(response.status, '204 NO CONTENT')
+        self.assertEqual(response.status_code, 204)
+        deleted_good = Goods.query.get(1)
+        self.assertFalse(deleted_good)
+
+    def test_delete_goods_resource_not_owner(self):
+        """
+        Test a delete request where Good of good_id does not belong to
+        authenticated user.
+        """
+        user = {
+            'username': 'ruby',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/goods/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            'Access to good is restricted to owner' in response.data)
+        good_not_deleted = Goods.query.get(1)
+        self.assertTrue(good_not_deleted)
+
+    def test_delete_goods_resource_non_existent_good_id(self):
+        """
+        Test a delete request where Good of id good_id does not exist.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/goods/4/', headers=headers)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue('Good of id 4 does not exist' in response.data)
+        good_not_deleted = Goods.query.get(1)
+        self.assertTrue(good_not_deleted)
+
+    def test_delete_goods_resource_no_authentication_token(self):
+        """
+        Test a delete request where authentication token has not been provided.
+        """
+        response = self.client.delete('/goods/1/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue('Unauthenticated request' in response.data)
+        good_not_deleted = Goods.query.get(1)
+        self.assertTrue(good_not_deleted)
+
+    def test_delete_goods_resource_invalid_authentication_token(self):
+        """
+        Test a delete request where invalid authentication token has been
+        provided.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/goods/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue('Invalid token' in response.data)
+        good_not_deleted = Goods.query.get(1)
+        self.assertTrue(good_not_deleted)
+
