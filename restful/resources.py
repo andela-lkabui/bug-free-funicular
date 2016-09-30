@@ -4,8 +4,8 @@ from flask import request
 from flask_restful import Resource, Api, reqparse
 
 from app import app, db
-from models import User, Accounts, Outlets
-from serializer import ServicesSchema, AccountsSchema, OutletSchema
+from models import User, Accounts, Outlets, Goods
+from serializer import ServicesSchema, AccountsSchema, OutletSchema, GoodsSchema
 
 api = Api(app)
 
@@ -284,66 +284,133 @@ class ServicesResource(Resource):
         return json_result.data, 201
 
 
-class GoodsResource(Resource):
+class GoodsListResource(Resource):
     """
-    Class encapsulates restful implementation of the Goods resource.
+    Class encapsulates restful implementation of the Goods list route.
     """
 
     def __init__(self):
         self.goods_schema = GoodsSchema()
 
     def get(self):
-        all_goods = Goods.query.all()
-        json_result = goods_schema.dumps(all_goods, many=True)
-        return json_result.data, 200
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                all_goods = Goods.query.filter_by(user_id=current_user.user_id)
+                json_result = self.goods_schema.dumps(all_goods, many=True)
+                result_dict = json.loads(json_result.data)
+                return result_dict, 200
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('price')
-        parser.add_argument('necessary')
-        values = parser.parse_args()
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('price')
+                parser.add_argument('necessary')
+                values = parser.parse_args()
 
-        result = goods_schema.load(values)
-        db.session.add(result.data)
-        db.session.commit()
+                if None not in values.values():
+                    result = self.goods_schema.load(values)
+                    db.session.add(result.data)
+                    db.session.commit()
 
-        json_result = goods_schema.dumps(result.data)
-        return json_result.data, 201
+                    json_result = self.goods_schema.dumps(result.data)
+                    return json.loads(json_result.data), 201
+                return {
+                        'message': 'Name, price and necessary fields are' +
+                        ' all required'
+                        }, 400
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
+
+
+class GoodsDetailResource(Resource):
+    """
+    Class encapsulates restful implementation of the Goods detail route.
+    """
+
+    def __init__(self):
+        self.goods_schema = GoodsSchema()
 
     def get(self, good_id):
-        get_good = Goods.query.get(good_id)
-        json_result = goods_schema.dumps(get_good)
-        return json_result.data, 200
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                get_good = Goods.query.get(good_id)
+                if get_good:
+                    if get_good.user_id == current_user.user_id:
+                        json_result = self.goods_schema.dumps(get_good)
+                        return json.loads(json_result.data), 200
+                    return {
+                        'message': 'Access to good is restricted to owner'
+                    }, 403
+                feedback = 'Good of id {0} does not exist'.format(good_id)
+                return {'message': feedback}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def put(self, good_id):
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('price')
-        parser.add_argument('necessary')
-        values = parser.parse_args()
-        # fetch the object from the DB
-        edit_good = Goods.query.get(good_id)
-        if edit_good:
-            if values.get('name'):
-                edit_good.name = values.get('name')
-            if values.get('price'):
-                edit_good.price = values.get('price')
-            if values.get('necessary') == 'True':
-                edit_good.necessary = values.get('necessary')
-            db.session.add(edit_good)
-            db.session.commit()
-            json_result = goods_schema.dumps(edit_good)
-            return json_result.data, 200
-        return json.dumps(not_found), 400
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('price')
+                parser.add_argument('necessary')
+                values = parser.parse_args()
+                # fetch the object from the DB
+                edit_good = Goods.query.get(good_id)
+                if edit_good:
+                    if edit_good.user_id == current_user.user_id:
+                        if values.get('name'):
+                            edit_good.name = values.get('name')
+                        if values.get('price'):
+                            edit_good.price = values.get('price')
+                        if values.get('necessary') in ['True', 'False']:
+                            # QUICK FIX
+                            data_from_json = self.goods_schema.load(values).data
+                            if type(data_from_json) == type({}):
+                                edit_good.necessary = data_from_json.get('necessary')
+                            else:
+                                edit_good.necessary = data_from_json.necessary
+                        db.session.add(edit_good)
+                        db.session.commit()
+                        json_result = self.goods_schema.dumps(edit_good)
+                        return json_result.data, 200
+                    return {
+                        'message': 'Access to good is restricted to owner'
+                    }, 403
+                feedback = 'Good of id {0} does not exist'.format(good_id)
+                return {'message': feedback}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
     def delete(self, good_id):
-        del_good = Goods.query.get(good_id)
-        if del_good:
-            db.session.delete(del_good)
-            db.session.commit()
-            return '', 204
-        return json.dumps(not_found), 400
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                del_good = Goods.query.get(good_id)
+                if del_good:
+                    if del_good.user_id == current_user.user_id:
+                        db.session.delete(del_good)
+                        db.session.commit()
+                        return '', 204
+                    return {
+                        'message': 'Access to good is restricted to owner'
+                    }, 403
+                feedback = 'Good of id {0} does not exist'.format(good_id)
+                return {'message': feedback}, 404
+            return {'message': 'Invalid token'}, 403
+        return {'message': 'Unauthenticated request'}, 401
 
 
 class OutletsListResource(Resource):
