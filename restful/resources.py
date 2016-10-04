@@ -4,7 +4,7 @@ from flask import request
 from flask_restful import Resource, Api, reqparse
 
 from app import app, db
-from models import User, Accounts, Outlets, Goods
+from models import User, Accounts, Outlets, Goods, Services
 from serializer import ServicesSchema, AccountsSchema, OutletSchema, GoodsSchema
 
 api = Api(app)
@@ -226,7 +226,7 @@ class AccountDetailResource(Resource):
         return {'message': 'Unauthenticated request'}, 401
 
 
-class ServicesResource(Resource):
+class ServicesListResource(Resource):
     """
     Class encapsulates restful implementation of the Services resource.
     """
@@ -239,6 +239,7 @@ class ServicesResource(Resource):
         json_result = self.services_schema.dumps(all_services, many=True)
         return json_result.data, 200
 
+class ServicesDetailResource(Resource):
     def get(self, service_id):
         get_service = Services.query.get(service_id)
         json_result = services_schema.dumps(get_service)
@@ -269,19 +270,6 @@ class ServicesResource(Resource):
             db.session.commit()
             return '', 204
         return json.dumps(not_found), 400
-
-    def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('price')
-        values = parser.parse_args()
-
-        result = self.services_schema.load(values)
-        db.session.add(result.data)
-        db.session.commit()
-
-        json_result = self.services_schema.dumps(result.data)
-        return json_result.data, 201
 
 
 class GoodsListResource(Resource):
