@@ -306,23 +306,36 @@ class ServicesDetailResource(Resource):
             return {'message': 'Invalid token'}, 401
         return {'message': 'Unauthenticated request'}, 401
 
-    def put(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('price')
-        values = parser.parse_args()
-        # fetch the object from the DB
-        edit_service = Services.query.get(service_id)
-        if edit_service:
-            if values.get('name'):
-                edit_service.name = values.get('name')
-            if values.get('price'):
-                edit_service.price = values.get('price')
-            db.session.add(edit_service)
-            db.session.commit()
-            json_result = services_schema.dumps(edit_service)
-            return json_result.data, 200
-        return json.dumps(not_found), 400
+    def put(self, service_id):
+        """
+        Updates an existing Service entry with provided data and returns the
+        edited service.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                put_service = Services.query.get(service_id)
+                if put_service:
+                    if put_service.user_id == current_user.user_id:
+                        parser = reqparse.RequestParser()
+                        parser.add_argument('name')
+                        parser.add_argument('price')
+                        values = parser.parse_args()
+                        if values.get('name'):
+                            put_service.name = values.get('name')
+                        if values.get('price'):
+                            put_service.price = values.get('price')
+                        db.session.add(put_service)
+                        db.session.commit()
+                        json_result = self.services_schema.dumps(put_service)
+                        return json_result.data, 200
+                    return {
+                            'message': 'Access to service is restricted to owner'
+                        }, 403
+                return {'message': 'Service does not exist'}, 404
+            return {'message': 'Invalid token'}, 401
+        return {'message': 'Unauthenticated request'}, 401
 
     def delete(self):
         del_service = Services.query.get(service_id)

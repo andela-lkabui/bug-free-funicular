@@ -498,7 +498,8 @@ class TestServices(TestBase):
 
     def test_put_services_resource_only_price_parameter_provided(self):
         """
-        Test a successful put request on the Services resource.
+        Test a put request on the Services resource when only the `price`
+        parameter is provided.
         """
         user = {
             'username': 'pythonista',
@@ -525,3 +526,4 @@ class TestServices(TestBase):
         edited_service = Services.query.get(1)
         self.assertEqual(edited_service.name, name)
         self.assertNotEqual(edited_service.price, price)
+
