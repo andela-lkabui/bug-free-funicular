@@ -58,6 +58,7 @@ class Services(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     price = db.Column(db.Integer)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
 
     def __repr__(self):
         """Defines custom representation for Services model instances."""
@@ -75,6 +76,7 @@ class User(db.Model):
     accounts = db.relationship('Accounts', backref='user', lazy='dynamic')
     outlets = db.relationship('Outlets', backref='user', lazy='dynamic')
     goods = db.relationship('Goods', backref='user', lazy='dynamic')
+    services = db.relationship('Services', backref='user', lazy='dynamic')
 
     def __repr__(self):
         """Defines custom representation for User model instances."""

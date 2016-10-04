@@ -235,9 +235,21 @@ class ServicesListResource(Resource):
         self.services_schema = ServicesSchema()
 
     def get(self):
-        all_services = Services.query.all()
-        json_result = self.services_schema.dumps(all_services, many=True)
-        return json_result.data, 200
+        """
+        Lists all Services belonging to the currently logged in user.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                all_services = Services.query.filter_by(
+                    user_id=current_user.user_id)
+                result = self.services_schema.dumps(all_services, many=True)
+                result_dict = json.loads(result.data)
+                return result_dict, 200
+            return {'message': 'Invalid token'}, 401
+        return {'message': 'Unauthenticated request'}, 401
+
 
 class ServicesDetailResource(Resource):
     def get(self, service_id):
