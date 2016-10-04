@@ -250,6 +250,32 @@ class ServicesListResource(Resource):
             return {'message': 'Invalid token'}, 401
         return {'message': 'Unauthenticated request'}, 401
 
+    def post(self):
+        """
+        Creates a Service that belongs to the currently logged in user.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                parser = reqparse.RequestParser()
+                parser.add_argument('name')
+                parser.add_argument('price')
+                values = parser.parse_args()
+
+                if None not in values.values() and '' not in values.values():
+                    result = self.services_schema.load(values)
+                    db.session.add(result.data)
+                    db.session.commit()
+
+                    json_result = self.services_schema.dumps(result.data)
+                    return json_result.data, 201
+                return {
+                        'message': 'Service name and price fields required'
+                        }, 400
+            return {'message': 'Invalid token'}, 401
+        return {'message': 'Unauthenticated request'}, 401
+
 
 class ServicesDetailResource(Resource):
     def get(self, service_id):
