@@ -1,0 +1,25 @@
+[
+    {
+        "model": "models.Services",
+        "records": [
+            {
+                "id": 1,
+                "name": "Tempora quam recusandae eos minima",
+                "price": 416935,
+                "user_id": 1
+            },
+            {
+                "id": 2,
+                "name": "Ipsum rerum illo suscipit tempore a perferendis",
+                "price": 470,
+                "user_id": 1
+            },
+            {
+                "id": 3,
+                "name": "Reiciendis qui odit tenetur neque",
+                "price": 118,
+                "user_id": 2
+            }
+        ]
+    }
+]

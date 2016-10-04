@@ -9,8 +9,8 @@ from serializer import OutletSchema, GoodsSchema, ServicesSchema
 from restful.resources import app, api, db
 from restful.resources import (
     UserResource, LoginResource, AccountListResource, AccountDetailResource,
-    ServicesResource, GoodsListResource, GoodsDetailResource,
-    OutletsListResource, OutletsDetailResource
+    ServicesListResource, ServicesDetailResource, GoodsListResource,
+    GoodsDetailResource, OutletsListResource, OutletsDetailResource
     )
 
 not_found = {'detail': 'Not found.'}
@@ -26,7 +26,8 @@ api.add_resource(UserResource, '/auth/new/')
 api.add_resource(LoginResource, '/auth/logout/', '/auth/login/')
 api.add_resource(AccountListResource, '/accounts/')
 api.add_resource(AccountDetailResource, '/accounts/<int:account_id>/')
-api.add_resource(ServicesResource, '/services/', '/services/<int:service_id>/')
+api.add_resource(ServicesListResource, '/services/')
+api.add_resource(ServicesDetailResource, '/services/<int:service_id>/')
 api.add_resource(GoodsListResource, '/goods/')
 api.add_resource(GoodsDetailResource, '/goods/<int:good_id>/')
 api.add_resource(OutletsListResource, '/outlets/')
