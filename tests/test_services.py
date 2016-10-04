@@ -228,3 +228,103 @@ class TestServices(TestBase):
         created_service = Services.query.filter_by(
             price=data.get('name')).first()
         self.assertFalse(created_service)
+
+    def test_get_detail_services_resource_successful(self):
+        """
+        Test a successful get(detail) request on the Services resource.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/services/1/', headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            'Tempora quam recusandae eos minima' in response.data)
+        self.assertTrue('416935' in response.data)
+        
+    def test_get_detail_services_resource_owner_permissions(self):
+        """
+        Test a get(detail) request on the Services resource when currently
+        logged in user is not the owner of the requested Service.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/services/3/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(
+            'Reiciendis qui odit tenetur neque' in response.data)
+        self.assertFalse('118' in response.data)
+        self.assertTrue(
+            'Access to service is restricted to owner' in response.data)
+
+    def test_get_detail_services_resource_no_authentication_token(self):
+        """
+        Test a get(detail) request on the Services resource when the
+        authentication token has not been provided.
+        """
+        response = self.client.get('/services/1/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertFalse(
+            'Reiciendis qui odit tenetur neque' in response.data)
+        self.assertFalse('118' in response.data)
+        self.assertTrue('Unauthenticated request' in response.data)
+
+    def test_get_detail_services_resource_invalid_authentication_token(self):
+        """
+        Test a get(detail) request on the Services resource when an invalid
+        authentication token has been provided.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/services/1/', headers=headers)
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertFalse(
+            'Reiciendis qui odit tenetur neque' in response.data)
+        self.assertFalse('118' in response.data)
+        self.assertTrue(
+            'Invalid token' in response.data)
+
+    def test_get_detail_services_resource_non_existent_service(self):
+        """
+        Test a get(detail) request on the Services resource when the Service of
+        `service_id` doesn't exist.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.get('/services/4/', headers=headers)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(
+            'Service does not exist' in response.data)
