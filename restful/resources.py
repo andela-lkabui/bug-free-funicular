@@ -337,13 +337,27 @@ class ServicesDetailResource(Resource):
             return {'message': 'Invalid token'}, 401
         return {'message': 'Unauthenticated request'}, 401
 
-    def delete(self):
-        del_service = Services.query.get(service_id)
-        if del_service:
-            db.session.delete(del_service)
-            db.session.commit()
-            return '', 204
-        return json.dumps(not_found), 400
+    def delete(self, service_id):
+        """
+        Deletes a service of id `service_id` if it belongs to the user
+        associated with the authentication token provided.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                del_service = Services.query.get(service_id)
+                if del_service:
+                    if del_service.user_id == current_user.user_id:
+                        db.session.delete(del_service)
+                        db.session.commit()
+                        return '', 204
+                    return {
+                            'message': 'Access to service is restricted to owner'
+                        }, 403
+                return {'message': 'Service does not exist'}, 404
+            return {'message': 'Invalid token'}, 401
+        return {'message': 'Unauthenticated request'}, 401
 
 
 class GoodsListResource(Resource):
@@ -555,7 +569,6 @@ class OutletsDetailResource(Resource):
                             'message': 'Get operation restricted to owner'
                             }, 403
                 return {'message': 'Outlet does not exist'}, 404
-                return
             return {'message': 'Invalid token'}, 403
         return {'message': 'Unauthenticated request'}, 401
 
