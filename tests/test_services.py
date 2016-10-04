@@ -328,3 +328,200 @@ class TestServices(TestBase):
         self.assertEqual(response.status_code, 404)
         self.assertTrue(
             'Service does not exist' in response.data)
+
+    def test_put_services_resource_successful(self):
+        """
+        Test a successful put request on the Services resource.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        data = {
+            'name': self.fake.sentence(),
+            'price': self.fake.random_number()
+        }
+        unedited_service = Services.query.get(1)
+        name = unedited_service.name
+        price = unedited_service.price
+        response = self.client.put('/services/1/', headers=headers, data=data)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(data.get('name') in response.data)
+        str_price = str(data.get('price'))
+        self.assertTrue(str_price in response.data)
+        edited_service = Services.query.get(1)
+        self.assertNotEqual(edited_service.name, name)
+        self.assertNotEqual(edited_service.price, price)
+
+    def test_put_services_resource_not_owner_permissions(self):
+        """
+        Test a put request on the Services resource where the current user is
+        not the owner of Service of `service_id`.
+        """
+        user = {
+            'username': 'ruby',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        data = {
+            'name': self.fake.sentence(),
+            'price': self.fake.random_number()
+        }
+        unedited_service = Services.query.get(1)
+        name = unedited_service.name
+        price = unedited_service.price
+        response = self.client.put('/services/1/', headers=headers, data=data)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            'Access to service is restricted to owner' in response.data)
+        edited_service = Services.query.get(1)
+        self.assertEqual(edited_service.name, name)
+        self.assertEqual(edited_service.price, price)
+
+    def test_put_services_resource_non_existent_service_id(self):
+        """
+        Test a put request on the Services resource when the Service of
+        `service_id` does not exist.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        data = {
+            'name': self.fake.sentence(),
+            'price': self.fake.random_number()
+        }
+        response = self.client.put('/services/4/', headers=headers, data=data)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(
+            'Service does not exist' in response.data)
+
+    def test_put_services_resource_no_authentication_token(self):
+        """
+        Test a put request on the Services resource when an authentication
+        token is not provided.
+        """
+        data = {
+            'name': self.fake.sentence(),
+            'price': self.fake.random_number()
+        }
+        unedited_service = Services.query.get(1)
+        name = unedited_service.name
+        price = unedited_service.price
+        response = self.client.put('/services/1/', data=data)
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue(
+            'Unauthenticated request' in response.data)
+        edited_service = Services.query.get(1)
+        self.assertEqual(edited_service.name, name)
+        self.assertEqual(edited_service.price, price)
+
+    def test_put_services_resource_invalid_authentication_token(self):
+        """
+        Test a put request on the Services resource when an invalid
+        authentication token is provided.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        data = {
+            'name': self.fake.sentence(),
+            'price': self.fake.random_number()
+        }
+        unedited_service = Services.query.get(1)
+        name = unedited_service.name
+        price = unedited_service.price
+        response = self.client.put('/services/1/', data=data, headers=headers)
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue(
+            'Invalid token' in response.data)
+        edited_service = Services.query.get(1)
+        self.assertEqual(edited_service.name, name)
+        self.assertEqual(edited_service.price, price)
+
+    def test_put_services_resource_only_name_parameter_provided(self):
+        """
+        Test a put request on the Services resource when only the `name`
+        parameter is provided.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        data = {
+            'name': self.fake.sentence()
+        }
+        unedited_service = Services.query.get(1)
+        name = unedited_service.name
+        price = unedited_service.price
+        response = self.client.put('/services/1/', data=data, headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            data.get('name') in response.data)
+        edited_service = Services.query.get(1)
+        self.assertNotEqual(edited_service.name, name)
+        self.assertEqual(edited_service.price, price)
+
+    def test_put_services_resource_only_price_parameter_provided(self):
+        """
+        Test a successful put request on the Services resource.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        data = {
+            'price': self.fake.random_number()
+        }
+        unedited_service = Services.query.get(1)
+        name = unedited_service.name
+        price = unedited_service.price
+        response = self.client.put('/services/1/', data=data, headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        self.assertEqual(response.status_code, 200)
+        str_price = str(data.get('price'))
+        self.assertTrue(str_price in response.data)
+        edited_service = Services.query.get(1)
+        self.assertEqual(edited_service.name, name)
+        self.assertNotEqual(edited_service.price, price)
