@@ -527,3 +527,94 @@ class TestServices(TestBase):
         self.assertEqual(edited_service.name, name)
         self.assertNotEqual(edited_service.price, price)
 
+    def test_delete_services_resource_successful(self):
+        """
+        Test a successful delete request on the Services resource.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/services/1/', headers=headers)
+        self.assertEqual(response.status, '204 NO CONTENT')
+        self.assertEqual(response.status_code, 204)
+        deleted_service = Services.query.get(1)
+        self.assertFalse(deleted_service)
+
+    def test_delete_services_resource_not_owner(self):
+        """
+        Test a successful delete request on the Services resource.
+        """
+        user = {
+            'username': 'ruby',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/services/1/', headers=headers)
+        self.assertEqual(response.status, '403 FORBIDDEN')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            'Access to service is restricted to owner' in response.data)
+        deleted_service = Services.query.get(1)
+        self.assertTrue(deleted_service)
+
+    def test_delete_services_resource_non_existent_service_id(self):
+        """
+        Test a delete request on the Services resource when Service of id
+        `service_id` does not exist.
+        """
+        user = {
+            'username': 'pythonista',
+            'password': 'pythonista'
+        }
+        response = self.client.post('/auth/login/', data=user)
+        self.assertEqual(response.status, '200 OK')
+        json_data = json.loads(response.data)
+        token = json_data.get('token')
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/services/4/', headers=headers)
+        self.assertEqual(response.status, '404 NOT FOUND')
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue('Service does not exist' in response.data)
+
+    def test_delete_services_resource_no_authentication(self):
+        """
+        Test a delete request on the Services resource when authentication
+        token is not provided.
+        """
+        response = self.client.delete('/services/1/')
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue('Unauthenticated request' in response.data)
+        deleted_service = Services.query.get(1)
+        self.assertTrue(deleted_service)
+
+    def test_delete_services_resource_invalid_authentication_token(self):
+        """
+        Test a successful delete request on the Services resource.
+        """
+        token = self.fake.sha256()
+        headers = {
+            'username': token
+        }
+        response = self.client.delete('/services/1/', headers=headers)
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue('Invalid token' in response.data)
+        deleted_service = Services.query.get(1)
+        self.assertTrue(deleted_service)
