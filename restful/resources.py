@@ -278,10 +278,33 @@ class ServicesListResource(Resource):
 
 
 class ServicesDetailResource(Resource):
+
+    def __init__(self):
+        """
+        Initializes instance variables
+        """
+        self.services_schema = ServicesSchema()
+
     def get(self, service_id):
-        get_service = Services.query.get(service_id)
-        json_result = services_schema.dumps(get_service)
-        return json_result.data, 200
+        """
+        Returns the Service of id `service_id` belonging to currently logged in
+        user.
+        """
+        token = request.headers.get('username')
+        if token:
+            current_user = User.verify_auth_token(token)
+            if current_user:
+                get_service = Services.query.get(service_id)
+                if get_service:
+                    if get_service.user_id == current_user.user_id:
+                        json_result = self.services_schema.dumps(get_service)
+                        return json_result.data, 200
+                    return {
+                            'message': 'Access to service is restricted to owner'
+                        }, 403
+                return {'message': 'Service does not exist'}, 404
+            return {'message': 'Invalid token'}, 401
+        return {'message': 'Unauthenticated request'}, 401
 
     def put(self):
         parser = reqparse.RequestParser()
